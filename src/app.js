@@ -18,6 +18,7 @@ app.use("/api", require("./routes/recommendation.routes"));
 app.use("/api", require("./routes/content.routes"));
 app.use("/api", require("./routes/home.routes"));
 app.use("/api", require("./routes/view.routes"));
+app.use("/api", require("./routes/trending.routes"));
 
 
 module.exports = app;
