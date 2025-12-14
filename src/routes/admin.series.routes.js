@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const auth = require("../middlewares/auth.middleware");
+// const auth = require("../middlewares/auth.middleware");
 
 const {
   addSeries,
@@ -10,9 +10,9 @@ const {
 } = require("../controllers/admin.series.controller");
 
 // 🔐 ADMIN ONLY
-router.post("/admin/series", auth, addSeries);
-router.post("/admin/season", auth, addSeason);
-router.post("/admin/episode", auth, addEpisode);
+router.post("/admin/series",  addSeries);
+router.post("/admin/season",  addSeason);
+router.post("/admin/episode",  addEpisode);
 
 module.exports = router;
 
