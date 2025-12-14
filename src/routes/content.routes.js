@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { getUnifiedContent } = require("../controllers/content.controller");
+const Movie = require("../models/Movie");
+const TvShow = require("../models/TvShow");
 
 router.get("/content", getUnifiedContent);
 
