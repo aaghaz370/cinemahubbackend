@@ -1,26 +1,27 @@
 const Movie = require("../models/Movie");
-const tmdb = require("../config/tmdb");
+const Series = require("../models/Series");
 
 exports.getRecommendations = async (req, res) => {
   try {
-    const { tmdbId, exclude } = req.query;
+    const { type, genres, exclude } = req.query;
 
-    // TMDB recommendations
-    const { data } = await tmdb.get(`/movie/${tmdbId}/recommendations`);
+    if (!genres) {
+      return res.json([]);
+    }
 
-    const tmdbIds = data.results.map(m => m.id);
+    const genreArray = genres.split(",");
 
-    // Only movies that exist in our DB
-    const movies = await Movie.find({
-      tmdbId: { $in: tmdbIds },
+    let Model = type === "series" ? Series : Movie;
+
+    const data = await Model.find({
+      "metadata.genres": { $in: genreArray },
       _id: { $ne: exclude }
     })
       .limit(10)
       .select("title slug metadata.poster metadata.rating");
 
-    res.json(movies);
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
