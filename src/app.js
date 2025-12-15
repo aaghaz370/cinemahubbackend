@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const limiter = require("./middlewares/rateLimit");
+const personRoutes = require("./routes/person.routes");
+
 
 
 const app = express();
@@ -9,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use(limiter);
 
+app.use("/api", personRoutes);
 app.use("/api", require("./routes/admin.movie.routes"));
 app.use("/api", require("./routes/public.movie.routes"));
 app.use("/api", require("./routes/admin.series.routes"));
