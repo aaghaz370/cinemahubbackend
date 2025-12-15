@@ -5,7 +5,8 @@ const movieSchema = new mongoose.Schema(
     title: { type: String, required: true },
     slug: { type: String, unique: true },
     tmdbId: { type: Number, required: true, unique: true },
-
+    
+const personSchema = new mongoose.Schema(
    metadata: {
   poster: String,
   backdrop: String,
