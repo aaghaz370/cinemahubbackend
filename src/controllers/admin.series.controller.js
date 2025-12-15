@@ -15,6 +15,25 @@ exports.addSeries = async (req, res) => {
       params: { append_to_response: "credits" }
     });
 
+    const cast = data.credits.cast.slice(0, 10).map(c => ({
+      tmdbId: c.id,
+      name: c.name,
+      profile: c.profile_path,
+      role: c.character
+    }));
+
+    const director = data.credits.crew.find(p => p.job === "Director");
+
+    const producers = data.credits.crew
+      .filter(p => p.job === "Producer")
+      .slice(0, 3)
+      .map(p => ({
+        tmdbId: p.id,
+        name: p.name,
+        profile: p.profile_path,
+        role: "Producer"
+      }));
+
     const series = await Series.create({
       title,
       slug: slugify(title, { lower: true }),
@@ -24,9 +43,24 @@ exports.addSeries = async (req, res) => {
         backdrop: data.backdrop_path,
         overview: data.overview,
         genres: data.genres.map(g => g.name),
-        cast: data.credits.cast.slice(0, 8).map(c => c.name),
+
+        cast,
+        director: director
+          ? {
+              tmdbId: director.id,
+              name: director.name,
+              profile: director.profile_path,
+              role: "Director"
+            }
+          : null,
+
+        producer: producers,
+
         rating: data.vote_average,
-        language: data.original_language
+        language: data.original_language,
+        originalTitle: data.original_name,
+        countries: data.origin_country,
+        companies: data.production_companies?.map(c => c.name)
       }
     });
 
