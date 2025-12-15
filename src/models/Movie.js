@@ -6,16 +6,27 @@ const movieSchema = new mongoose.Schema(
     slug: { type: String, unique: true },
     tmdbId: { type: Number, required: true, unique: true },
 
-    metadata: {
-      poster: String,
-      backdrop: String,
-      overview: String,
-      genres: [String],
-      cast: [String],
-      rating: Number,
-      language: String,
-      runtime: Number
-    },
+   metadata: {
+  poster: String,
+  backdrop: String,
+  overview: String,
+  genres: [String],
+
+  cast: [personSchema],
+  director: personSchema,
+  producer: [personSchema],
+
+  rating: Number,
+  language: String,
+  runtime: Number,
+
+  originalTitle: String,
+  budget: Number,
+  revenue: Number,
+  countries: [String],
+  companies: [String]
+},
+
 
     views: {
   type: Number,
