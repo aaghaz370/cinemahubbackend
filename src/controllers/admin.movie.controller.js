@@ -12,28 +12,48 @@ exports.addMovie = async (req, res) => {
 
     // Fetch TMDB Data
     const { data } = await tmdb.get(`/movie/${tmdbId}`, {
-      params: { append_to_response: "credits" }
-    });
+  params: { append_to_response: "credits,recommendations" }
+});
+
 
     const movie = await Movie.create({
-      title,
-      slug: slugify(title, { lower: true }),
-      tmdbId,
+  title,
+  slug: slugify(title, { lower: true }),
+  tmdbId,
 
-      metadata: {
-        poster: data.poster_path,
-        backdrop: data.backdrop_path,
-        overview: data.overview,
-        genres: data.genres.map(g => g.name),
-        cast: data.credits.cast.slice(0, 8).map(c => c.name),
-        rating: data.vote_average,
-        language: data.original_language,
-        runtime: data.runtime
-      },
+  metadata: {
+    poster: data.poster_path,
+    backdrop: data.backdrop_path,
+    overview: data.overview,
+    genres: data.genres.map(g => g.name),
 
-      watch: watch || [],
-      download: download || []
-    });
+    cast,
+    director: director
+      ? {
+          tmdbId: director.id,
+          name: director.name,
+          profile: director.profile_path,
+          role: "Director"
+        }
+      : null,
+
+    producer: producers,
+
+    rating: data.vote_average,
+    language: data.original_language,
+    runtime: data.runtime,
+
+    originalTitle: data.original_title,
+    budget: data.budget,
+    revenue: data.revenue,
+    countries: data.production_countries?.map(c => c.name),
+    companies: data.production_companies?.map(c => c.name)
+  },
+
+  watch: watch || [],
+  download: download || []
+});
+
 
     res.status(201).json({
       message: "🎬 Movie added successfully",
