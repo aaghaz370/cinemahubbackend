@@ -1,46 +1,22 @@
 const mongoose = require("mongoose");
 
-const personSchema = new mongoose.Schema(
+const seasonSchema = new mongoose.Schema(
   {
-    tmdbId: Number,
-    name: String,
-    profile: String,
-    role: String
-  },
-  { _id: false }
-);
-
-const seriesSchema = new mongoose.Schema(
-  {
-    title: String,
-    slug: String,
-    tmdbId: Number,
-
-    metadata: {
-      poster: String,
-      backdrop: String,
-      overview: String,
-      genres: [String],
-
-      cast: [personSchema],
-      director: personSchema,
-      producer: [personSchema],
-
-      rating: Number,
-      language: String,
-      originalTitle: String,
-      countries: [String],
-      companies: [String]
+    series: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Series",
+      required: true
     },
+    seasonNumber: { type: Number, required: true },
 
-    seasons: [
+    episodes: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Season"
+        ref: "Episode"
       }
     ]
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Series", seriesSchema);
+module.exports = mongoose.model("Season", seasonSchema);
