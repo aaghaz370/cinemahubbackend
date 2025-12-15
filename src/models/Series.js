@@ -6,15 +6,23 @@ const seriesSchema = new mongoose.Schema(
     slug: { type: String, unique: true },
     tmdbId: { type: Number, required: true, unique: true },
 
-    metadata: {
-      poster: String,
-      backdrop: String,
-      overview: String,
-      genres: [String],
-      cast: [String],
-      rating: Number,
-      language: String
-    },
+   metadata: {
+  poster: String,
+  backdrop: String,
+  overview: String,
+  genres: [String],
+
+  cast: [personSchema],
+  director: personSchema,
+  producer: [personSchema],
+
+  rating: Number,
+  language: String,
+  originalTitle: String,
+  countries: [String],
+  companies: [String]
+},
+
 
     seasons: [
       {
