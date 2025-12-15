@@ -1,17 +1,5 @@
 const mongoose = require("mongoose");
 
-/* ✅ DEFINE PERSON SCHEMA FIRST */
-const personSchema = new mongoose.Schema(
-  {
-    tmdbId: Number,
-    name: String,
-    profile: String,
-    role: String
-  },
-  { _id: false }
-);
-
-/* MOVIE SCHEMA */
 const movieSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -24,25 +12,41 @@ const movieSchema = new mongoose.Schema(
       overview: String,
       genres: [String],
 
-      cast: [personSchema],
-      director: personSchema,
-      producer: [personSchema],
+      // ✅ SIMPLE & SAFE
+      cast: [
+        {
+          name: String,
+          profile: String,
+          tmdbId: Number
+        }
+      ],
+
+      director: {
+        name: String,
+        profile: String,
+        tmdbId: Number
+      },
+
+      producers: [
+        {
+          name: String,
+          profile: String,
+          tmdbId: Number
+        }
+      ],
 
       rating: Number,
       language: String,
       runtime: Number,
 
+      // NEW FIELDS
       originalTitle: String,
       budget: Number,
       revenue: Number,
-      countries: [String],
-      companies: [String]
+      countries: [String]
     },
 
-    views: {
-      type: Number,
-      default: 0
-    },
+    views: { type: Number, default: 0 },
 
     watch: [
       {
@@ -66,9 +70,9 @@ const movieSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* INDEXES */
 movieSchema.index({ title: "text" });
 movieSchema.index({ slug: 1 });
 
 module.exports = mongoose.model("Movie", movieSchema);
+
 
