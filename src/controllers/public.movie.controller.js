@@ -22,7 +22,9 @@ exports.getAllMovies = async (req, res) => {
  */
 exports.getMovieBySlug = async (req, res) => {
   try {
-    const movie = await Movie.findOne({ slug: req.params.slug });
+    const movie = await Movie.findOne({ slug: req.params.slug })
+  .populate("metadata.cast")
+
 
     if (!movie) {
       return res.status(404).json({ message: "Movie not found" });
