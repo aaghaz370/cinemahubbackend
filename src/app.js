@@ -17,7 +17,7 @@ app.use("/api", require("./routes/public.movie.routes"));
 app.use("/api", require("./routes/admin.series.routes"));
 app.use("/api", require("./routes/public.series.routes"));
 app.use("/api", require("./routes/search.routes"));
-app.use("/api", require("./routes/recommendation.routes"));
+app.use("/api/recommendations", require("./routes/recommendation.routes"));
 app.use("/api", require("./routes/content.routes"));
 app.use("/api", require("./routes/home.routes"));
 app.use("/api", require("./routes/view.routes"));
