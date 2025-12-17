@@ -1,5 +1,78 @@
 const Movie = require("../models/Movie");
 
+
+exports.addMovie = async (req, res) => {
+  try {
+    const { title, tmdbId, watch = [], download = [] } = req.body;
+
+    const { data } = await tmdb.get(`/movie/${tmdbId}`, {
+      params: { append_to_response: "credits" }
+    });
+
+    // 🎭 CAST
+    const cast = data.credits.cast.slice(0, 10).map(p => ({
+      name: p.name,
+      profile: p.profile_path,
+      tmdbId: p.id
+    }));
+
+    // 🎬 DIRECTOR
+    const directorData = data.credits.crew.find(
+      c => c.job === "Director"
+    );
+
+    const director = directorData
+      ? {
+          name: directorData.name,
+          profile: directorData.profile_path,
+          tmdbId: directorData.id
+        }
+      : null;
+
+    // 🏭 PRODUCERS
+    const producers = data.credits.crew
+      .filter(c => c.job === "Producer")
+      .slice(0, 5)
+      .map(p => ({
+        name: p.name,
+        profile: p.profile_path,
+        tmdbId: p.id
+      }));
+
+    const movie = await Movie.create({
+      title,
+      slug: slugify(title, { lower: true }),
+      tmdbId,
+
+      metadata: {
+        poster: data.poster_path,
+        backdrop: data.backdrop_path,
+        overview: data.overview,
+        genres: data.genres.map(g => g.name),
+        rating: data.vote_average,
+        language: data.original_language,
+        runtime: data.runtime,
+
+        originalTitle: data.original_title,
+        budget: data.budget,
+        revenue: data.revenue,
+        countries: data.production_countries.map(c => c.name),
+
+        cast,
+        director,
+        producers
+      },
+
+      watch,
+      download
+    });
+
+    res.status(201).json(movie);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
 /* ===============================
    ADD MOVIE (already exists)
 ================================ */
