@@ -1,5 +1,6 @@
 const Movie = require("../models/Movie");
-
+const tmdb = require("../config/tmdb");
+const slugify = require("slugify");
 
 exports.addMovie = async (req, res) => {
   try {
