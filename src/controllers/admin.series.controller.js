@@ -78,9 +78,11 @@ exports.addSeason = async (req, res) => {
     const { seriesId, seasonNumber } = req.body;
 
     const season = await Season.create({
-      series: seriesId,
-      seasonNumber
-    });
+  series: seriesId,
+  seasonNumber,
+  download: []   // ✅ season-level download
+});
+
 
     await Series.findByIdAndUpdate(seriesId, {
       $push: { seasons: season._id }
