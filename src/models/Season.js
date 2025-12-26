@@ -14,6 +14,15 @@ const seasonSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Episode"
       }
+    ],
+
+    // ZIP Downloads for entire season
+    zipDownloads: [
+      {
+        quality: { type: String, required: true }, // e.g., "720p", "1080p"
+        url: { type: String, required: true },
+        server: { type: String, default: "HubCloud" }
+      }
     ]
   },
   { timestamps: true }
