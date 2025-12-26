@@ -23,7 +23,7 @@ exports.getAllMovies = async (req, res) => {
 exports.getMovieBySlug = async (req, res) => {
   try {
     const movie = await Movie.findOne({ slug: req.params.slug })
-  .populate("metadata.cast")
+      .populate("metadata.cast")
 
 
     if (!movie) {

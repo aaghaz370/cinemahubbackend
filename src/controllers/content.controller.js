@@ -6,13 +6,13 @@ exports.getUnifiedContent = async (req, res) => {
     const moviesRaw = await Movie.find()
       .sort({ createdAt: -1 })
       .limit(20)
-      .select("title slug metadata.poster metadata.rating createdAt")
+      .select("title slug metadata.poster metadata.rating metadata.genres createdAt")
       .lean();
 
     const seriesRaw = await Series.find()
       .sort({ createdAt: -1 })
       .limit(20)
-      .select("title slug metadata.poster metadata.rating createdAt")
+      .select("title slug metadata.poster metadata.rating metadata.genres seasons createdAt")
       .lean();
 
     const movies = moviesRaw.map(m => ({
