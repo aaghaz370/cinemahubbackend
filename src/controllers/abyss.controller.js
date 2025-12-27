@@ -4,18 +4,27 @@ const API_KEY = 'bae3b7ed62104a5c863a3c152c3ce8ba';
 const API_BASE = 'https://api.abyss.to/v1';
 const UPLOAD_URL = 'https://up.abyss.to';
 
-// Create axios instance with API key in query params
-const abyssApi = axios.create({
+// For READ operations (GET) - use query param
+const readApi = axios.create({
     baseURL: API_BASE,
     params: { key: API_KEY },
     headers: { 'Content-Type': 'application/json' }
+});
+
+// For WRITE operations (POST, PUT, DELETE, PATCH) - use Bearer token
+const writeApi = axios.create({
+    baseURL: API_BASE,
+    headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+    }
 });
 
 // ==================== RESOURCES ====================
 exports.getResources = async (req, res) => {
     try {
         const { q = '', folderId = '', maxResults = 100, pageToken = '' } = req.query;
-        const response = await abyssApi.get('/resources', {
+        const response = await readApi.get('/resources', {
             params: { q, folderId, maxResults, pageToken, orderBy: 'createdAt:desc' }
         });
         res.json(response.data);
@@ -27,7 +36,7 @@ exports.getResources = async (req, res) => {
 
 exports.getQuota = async (req, res) => {
     try {
-        const response = await abyssApi.get('/about');
+        const response = await readApi.get('/about');
         res.json(response.data);
     } catch (error) {
         console.error('❌ Quota:', error.response?.status);
@@ -39,7 +48,7 @@ exports.getQuota = async (req, res) => {
 exports.getFileInfo = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await abyssApi.get(`/files/${id}`);
+        const response = await readApi.get(`/files/${id}`);
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -52,7 +61,7 @@ exports.renameFile = async (req, res) => {
         const { name } = req.body;
         console.log('✏️ Rename file:', id, '->', name);
 
-        const response = await abyssApi.put(`/files/${id}`, { name });
+        const response = await writeApi.put(`/files/${id}`, { name });
         console.log('✅ Renamed');
         res.json(response.data);
     } catch (error) {
@@ -65,9 +74,8 @@ exports.moveFile = async (req, res) => {
     try {
         const { id } = req.params;
         const { parentId } = req.body;
-        const response = await abyssApi.patch(`/files/${id}`, null, {
-            params: { parentId: parentId || '' }
-        });
+        const url = `/files/${id}?parentId=${parentId || ''}`;
+        const response = await writeApi.patch(url);
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -78,7 +86,7 @@ exports.deleteFile = async (req, res) => {
     try {
         const { id } = req.params;
         console.log('🗑️ Delete file:', id);
-        const response = await abyssApi.delete(`/files/${id}`);
+        const response = await writeApi.delete(`/files/${id}`);
         console.log('✅ Deleted');
         res.json({ success: true });
     } catch (error) {
@@ -93,7 +101,7 @@ exports.createFolder = async (req, res) => {
         const { name, parentId } = req.body;
         console.log('📁 Create folder:', name);
 
-        const response = await abyssApi.post('/folders', { name, parentId });
+        const response = await writeApi.post('/folders', { name, parentId });
         console.log('✅ Created');
         res.json(response.data);
     } catch (error) {
@@ -105,7 +113,7 @@ exports.createFolder = async (req, res) => {
 exports.getFolders = async (req, res) => {
     try {
         const { q = '', folderId = '', maxResults = 100, pageToken = '' } = req.query;
-        const response = await abyssApi.get('/folders/list', {
+        const response = await readApi.get('/folders/list', {
             params: { q, folderId, maxResults, pageToken }
         });
         res.json(response.data);
@@ -117,7 +125,7 @@ exports.getFolders = async (req, res) => {
 exports.getFolderInfo = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await abyssApi.get(`/folders/${id}`);
+        const response = await readApi.get(`/folders/${id}`);
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -128,7 +136,7 @@ exports.renameFolder = async (req, res) => {
     try {
         const { id } = req.params;
         const { name } = req.body;
-        const response = await abyssApi.put(`/folders/${id}`, { name });
+        const response = await writeApi.put(`/folders/${id}`, { name });
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -139,9 +147,8 @@ exports.moveFolder = async (req, res) => {
     try {
         const { id } = req.params;
         const { parentId } = req.body;
-        const response = await abyssApi.patch(`/folders/${id}`, null, {
-            params: { parentId: parentId || '' }
-        });
+        const url = `/folders/${id}?parentId=${parentId || ''}`;
+        const response = await writeApi.patch(url);
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -151,7 +158,7 @@ exports.moveFolder = async (req, res) => {
 exports.deleteFolder = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await abyssApi.delete(`/folders/${id}`);
+        const response = await writeApi.delete(`/folders/${id}`);
         res.json({ success: true });
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -164,16 +171,13 @@ exports.remoteUploadGD = async (req, res) => {
         const { fileId, folderName, parentId } = req.body;
         console.log('📥 Remote GD:', fileId);
 
-        let endpoint = `/remote/${fileId}`;
-        let params = {};
-
+        let url = `/remote/${fileId}`;
         if (folderName) {
-            endpoint = `/remote/${fileId}/folder`;
-            params = { name: folderName };
-            if (parentId) params.parentId = parentId;
+            url = `/remote/${fileId}/folder?name=${encodeURIComponent(folderName)}`;
+            if (parentId) url += `&parentId=${parentId}`;
         }
 
-        const response = await abyssApi.post(endpoint, {}, { params });
+        const response = await writeApi.post(url);
         console.log('✅ Remote started');
         res.json(response.data);
     } catch (error) {
@@ -186,7 +190,7 @@ exports.remoteUploadGD = async (req, res) => {
 exports.getSubtitles = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await abyssApi.get(`/subtitles/${id}/list`);
+        const response = await readApi.get(`/subtitles/${id}/list`);
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -196,7 +200,7 @@ exports.getSubtitles = async (req, res) => {
 exports.deleteSubtitle = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await abyssApi.delete(`/subtitles/${id}`);
+        const response = await writeApi.delete(`/subtitles/${id}`);
         res.json({ success: true });
     } catch (error) {
         res.status(error.response?.status || 500).json({ error: error.message });
@@ -218,7 +222,7 @@ exports.getUploadUrl = async (req, res) => {
 // ==================== TEST ====================
 exports.testConnection = async (req, res) => {
     try {
-        const response = await abyssApi.get('/about');
+        const response = await readApi.get('/about');
         res.json({
             success: true,
             message: '✅ Connected!',
