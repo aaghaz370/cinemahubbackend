@@ -89,21 +89,27 @@ exports.remoteUpload = async (req, res) => {
     try {
         const { fileId } = req.body;
 
+        console.log('Remote upload request for fileId:', fileId);
+
+        // Use query parameter instead of Authorization header for Abyss API
         const response = await axios.post(
-            `${API_BASE}/remote/${fileId}`,
+            `${API_BASE}/remote/${fileId}?key=${API_KEY}`,
             {},
             {
                 headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
                     'Content-Type': 'application/json'
                 }
             }
         );
 
+        console.log('Abyss remote upload response:', response.data);
         res.json(response.data);
     } catch (error) {
-        console.error('Abyss API error:', error.response?.data || error.message);
-        res.status(500).json({ error: error.message });
+        console.error('Abyss remote upload error:', error.response?.data || error.message);
+        res.status(500).json({
+            error: error.response?.data?.msg || error.message,
+            details: error.response?.data
+        });
     }
 };
 
