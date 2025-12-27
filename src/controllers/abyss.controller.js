@@ -84,26 +84,43 @@ exports.deleteVideo = async (req, res) => {
     }
 };
 
-// Remote upload
+// Remote upload - supports Google Drive and direct URLs
 exports.remoteUpload = async (req, res) => {
     try {
-        const { fileId } = req.body;
+        const { url } = req.body;
 
-        console.log('Remote upload request for fileId:', fileId);
+        console.log('Remote upload request for URL:', url);
 
-        // Use query parameter instead of Authorization header for Abyss API
-        const response = await axios.post(
-            `${API_BASE}/remote/${fileId}?key=${API_KEY}`,
-            {},
-            {
-                headers: {
-                    'Content-Type': 'application/json'
+        // Extract Google Drive file ID if it's a GD link
+        const gdMatch = url.match(/\/d\/([-\w]{25,})/);
+
+        if (gdMatch) {
+            // Google Drive upload
+            const fileId = gdMatch[1];
+            console.log('Detected Google Drive fileId:', fileId);
+
+            const response = await axios.post(
+                `${API_BASE}/remote/${fileId}?key=${API_KEY}`,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 }
-            }
-        );
+            );
 
-        console.log('Abyss remote upload response:', response.data);
-        res.json(response.data);
+            console.log('Abyss remote upload response:', response.data);
+            res.json(response.data);
+        } else {
+            // For direct URLs, we need to download and re-upload
+            // This is a workaround since Abyss only supports GD remote
+            res.status(400).json({
+                error: 'Direct URL remote upload not supported by Abyss API',
+                message: 'Please use Google Drive links or upload files directly',
+                supportedFormats: ['Google Drive'],
+                alternativeHint: 'Upload file directly using the file upload option'
+            });
+        }
     } catch (error) {
         console.error('Abyss remote upload error:', error.response?.data || error.message);
         res.status(500).json({
