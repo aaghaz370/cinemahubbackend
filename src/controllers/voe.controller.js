@@ -1,7 +1,7 @@
 const axios = require('axios');
 const FormData = require('form-data');
 
-const API_KEY = 'hqz89lbyjbsqt1wgpmkwgjji4'; // VOE.sx API key
+const API_KEY = '1bMix63fYVCSmkZA7ev7PfQcsPCu2fSr0FAQE7vybHHlQ7kB8HXYBPnFI5QAhKZf';
 const API_BASE = 'https://voe.sx/api';
 
 // ==================== ACCOUNT ====================
