@@ -6,10 +6,16 @@ const personRoutes = require("./routes/person.routes");
 const app = express();
 
 // 🔒 SECURE CORS Configuration
+// Normalize URLs by removing trailing slashes
+const normalizeUrl = (url) => {
+    if (!url) return url;
+    return url.replace(/\/$/, ''); // Remove trailing slash
+};
+
 const allowedOrigins = [
-    // Production URLs
-    process.env.FRONTEND_URL,
-    process.env.ADMIN_URL,
+    // Production URLs (from environment variables)
+    normalizeUrl(process.env.FRONTEND_URL),
+    normalizeUrl(process.env.ADMIN_URL),
 
     // Development URLs
     'http://localhost:5173',
@@ -18,22 +24,29 @@ const allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
 
-    // Add your production URLs manually as backup
+    // Hardcoded production URLs as backup
+    'https://cinemahub8.vercel.app',
     'https://cinemahub.vercel.app',
     'https://cinemahub-admin.vercel.app'
 ].filter(Boolean); // Remove undefined values
 
+console.log('🔒 CORS Allowed Origins:', allowedOrigins);
+
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.) in development
-        if (!origin && process.env.NODE_ENV !== 'production') {
+        // Normalize the incoming origin too
+        const normalizedOrigin = normalizeUrl(origin);
+
+        // Allow requests with no origin (mobile apps, Postman, server-to-server)
+        if (!origin) {
             return callback(null, true);
         }
 
-        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
+            console.log('✅ CORS allowed:', normalizedOrigin);
             callback(null, true);
         } else {
-            console.log('❌ CORS blocked origin:', origin);
+            console.log('❌ CORS blocked origin:', normalizedOrigin);
             callback(new Error('Not allowed by CORS'));
         }
     },
