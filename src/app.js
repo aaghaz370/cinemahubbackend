@@ -67,9 +67,15 @@ app.use("/api", require("./routes/public.series.routes"));
 app.use("/api", require("./routes/search.routes"));
 app.use("/api/recommendations", require("./routes/recommendation.routes"));
 app.use("/api", require("./routes/content.routes"));
+// Auth routes (no auth required)
+app.use("/api", require("./routes/auth.routes"));
+
+// Public routes
 app.use("/api", require("./routes/home.routes"));
 app.use("/api", require("./routes/view.routes"));
 app.use("/api", require("./routes/trending.routes"));
+
+// Admin routes (auth required - will be protected in next step)
 app.use("/api", require("./routes/admin.movie.v2.routes"));
 app.use("/api", require("./routes/admin.series.v2.routes"));
 app.use("/api", require("./routes/abyss.routes"));
