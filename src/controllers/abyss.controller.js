@@ -52,12 +52,17 @@ exports.renameFile = async (req, res) => {
         console.log('Rename file request - ID:', id, 'New name:', name);
 
         const response = await axios.put(
-            `${API_BASE}/files/${id}?key=${API_KEY}`,
+            `${API_BASE}/files/${id}`,
             { name },
-            { headers: { 'Content-Type': 'application/json' } }
+            {
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
         );
 
-        console.log('Abyss rename response:', response.data);
+        console.log('✅ Abyss rename response:', response.data);
         res.json(response.data);
     } catch (error) {
         console.error('❌ Abyss rename error:');
@@ -77,9 +82,9 @@ exports.moveFile = async (req, res) => {
         const { parentId } = req.body;
 
         const response = await axios.patch(
-            `${API_BASE}/files/${id}?key=${API_KEY}&parentId=${parentId || ''}`,
+            `${API_BASE}/files/${id}?parentId=${parentId || ''}`,
             {},
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' } }
         );
 
         res.json(response.data);
@@ -94,7 +99,9 @@ exports.deleteFile = async (req, res) => {
         const { id } = req.params;
         console.log('Delete file request - ID:', id);
 
-        const response = await axios.delete(`${API_BASE}/files/${id}?key=${API_KEY}`);
+        const response = await axios.delete(`${API_BASE}/files/${id}`, {
+            headers: { 'Authorization': `Bearer ${API_KEY}` }
+        });
 
         console.log('✅ File deleted successfully');
         res.json({ success: true });
@@ -118,9 +125,9 @@ exports.createFolder = async (req, res) => {
         console.log('Create folder request - Name:', name, 'ParentID:', parentId);
 
         const response = await axios.post(
-            `${API_BASE}/folders?key=${API_KEY}`,
+            `${API_BASE}/folders`,
             { name, parentId },
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' } }
         );
 
         console.log('✅ Folder created:', response.data);
@@ -168,9 +175,9 @@ exports.renameFolder = async (req, res) => {
         const { name } = req.body;
 
         const response = await axios.put(
-            `${API_BASE}/folders/${id}?key=${API_KEY}`,
+            `${API_BASE}/folders/${id}`,
             { name },
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' } }
         );
 
         res.json(response.data);
@@ -186,9 +193,9 @@ exports.moveFolder = async (req, res) => {
         const { parentId } = req.body;
 
         const response = await axios.patch(
-            `${API_BASE}/folders/${id}?key=${API_KEY}&parentId=${parentId || ''}`,
+            `${API_BASE}/folders/${id}?parentId=${parentId || ''}`,
             {},
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' } }
         );
 
         res.json(response.data);
@@ -201,7 +208,9 @@ exports.moveFolder = async (req, res) => {
 exports.deleteFolder = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await axios.delete(`${API_BASE}/folders/${id}?key=${API_KEY}`);
+        const response = await axios.delete(`${API_BASE}/folders/${id}`, {
+            headers: { 'Authorization': `Bearer ${API_KEY}` }
+        });
         res.json({ success: true });
     } catch (error) {
         console.error('Abyss API error:', error.response?.data || error.message);
@@ -224,9 +233,9 @@ exports.remoteUploadGD = async (req, res) => {
         }
 
         const response = await axios.post(
-            `${url}?key=${API_KEY}`,
+            url,
             {},
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' } }
         );
 
         res.json(response.data);
@@ -285,7 +294,9 @@ exports.getSubtitles = async (req, res) => {
 exports.deleteSubtitle = async (req, res) => {
     try {
         const { id } = req.params;
-        const response = await axios.delete(`${API_BASE}/subtitles/${id}?key=${API_KEY}`);
+        const response = await axios.delete(`${API_BASE}/subtitles/${id}`, {
+            headers: { 'Authorization': `Bearer ${API_KEY}` }
+        });
         res.json({ success: true });
     } catch (error) {
         console.error('Abyss API error:', error.response?.data || error.message);
