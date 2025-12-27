@@ -49,16 +49,25 @@ exports.renameFile = async (req, res) => {
         const { id } = req.params;
         const { name } = req.body;
 
+        console.log('Rename file request - ID:', id, 'New name:', name);
+
         const response = await axios.put(
             `${API_BASE}/files/${id}?key=${API_KEY}`,
             { name },
             { headers: { 'Content-Type': 'application/json' } }
         );
 
+        console.log('Abyss rename response:', response.data);
         res.json(response.data);
     } catch (error) {
-        console.error('Abyss API error:', error.response?.data || error.message);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Abyss rename error:');
+        console.error('Status:', error.response?.status);
+        console.error('Data:', JSON.stringify(error.response?.data, null, 2));
+        console.error('Message:', error.message);
+        res.status(500).json({
+            error: error.response?.data || error.message,
+            status: error.response?.status
+        });
     }
 };
 
@@ -83,11 +92,20 @@ exports.moveFile = async (req, res) => {
 exports.deleteFile = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('Delete file request - ID:', id);
+
         const response = await axios.delete(`${API_BASE}/files/${id}?key=${API_KEY}`);
+
+        console.log('✅ File deleted successfully');
         res.json({ success: true });
     } catch (error) {
-        console.error('Abyss API error:', error.response?.data || error.message);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Delete file error:');
+        console.error('Status:', error.response?.status);
+        console.error('Data:', JSON.stringify(error.response?.data, null, 2));
+        res.status(500).json({
+            error: error.response?.data || error.message,
+            status: error.response?.status
+        });
     }
 };
 
@@ -97,16 +115,24 @@ exports.createFolder = async (req, res) => {
     try {
         const { name, parentId } = req.body;
 
+        console.log('Create folder request - Name:', name, 'ParentID:', parentId);
+
         const response = await axios.post(
             `${API_BASE}/folders?key=${API_KEY}`,
             { name, parentId },
             { headers: { 'Content-Type': 'application/json' } }
         );
 
+        console.log('✅ Folder created:', response.data);
         res.json(response.data);
     } catch (error) {
-        console.error('Abyss API error:', error.response?.data || error.message);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Create folder error:');
+        console.error('Status:', error.response?.status);
+        console.error('Data:', JSON.stringify(error.response?.data, null, 2));
+        res.status(500).json({
+            error: error.response?.data || error.message,
+            status: error.response?.status
+        });
     }
 };
 
