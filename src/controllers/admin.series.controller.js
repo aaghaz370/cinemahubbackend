@@ -47,11 +47,11 @@ exports.addSeries = async (req, res) => {
         cast,
         director: director
           ? {
-              tmdbId: director.id,
-              name: director.name,
-              profile: director.profile_path,
-              role: "Director"
-            }
+            tmdbId: director.id,
+            name: director.name,
+            profile: director.profile_path,
+            role: "Director"
+          }
           : null,
 
         producer: producers,
@@ -71,6 +71,34 @@ exports.addSeries = async (req, res) => {
 };
 
 /**
+ * DELETE SERIES (and all its seasons/episodes)
+ */
+exports.deleteSeries = async (req, res) => {
+  try {
+    const series = await Series.findById(req.params.id);
+    if (!series) return res.status(404).json({ error: "Series not found" });
+
+    // Delete all episodes in all seasons
+    for (const seasonId of series.seasons) {
+      const season = await Season.findById(seasonId);
+      if (season) {
+        await Episode.deleteMany({ _id: { $in: season.episodes } });
+      }
+    }
+
+    // Delete all seasons
+    await Season.deleteMany({ _id: { $in: series.seasons } });
+
+    // Delete the series
+    await Series.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Series deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
  * ADD SEASON
  */
 exports.addSeason = async (req, res) => {
@@ -78,10 +106,10 @@ exports.addSeason = async (req, res) => {
     const { seriesId, seasonNumber } = req.body;
 
     const season = await Season.create({
-  series: seriesId,
-  seasonNumber,
-  download: []   // ✅ season-level download
-});
+      series: seriesId,
+      seasonNumber,
+      download: []   // ✅ season-level download
+    });
 
 
     await Series.findByIdAndUpdate(seriesId, {
@@ -89,6 +117,52 @@ exports.addSeason = async (req, res) => {
     });
 
     res.status(201).json(season);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * UPDATE SEASON
+ */
+exports.updateSeason = async (req, res) => {
+  try {
+    const { seasonNumber } = req.body;
+
+    const season = await Season.findByIdAndUpdate(
+      req.params.id,
+      { seasonNumber },
+      { new: true }
+    );
+
+    if (!season) return res.status(404).json({ error: "Season not found" });
+
+    res.json({ message: "Season updated", season });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * DELETE SEASON (and all its episodes)
+ */
+exports.deleteSeason = async (req, res) => {
+  try {
+    const season = await Season.findById(req.params.id);
+    if (!season) return res.status(404).json({ error: "Season not found" });
+
+    // Delete all episodes in this season
+    await Episode.deleteMany({ _id: { $in: season.episodes } });
+
+    // Remove season from series
+    await Series.findByIdAndUpdate(season.series, {
+      $pull: { seasons: season._id }
+    });
+
+    // Delete the season
+    await Season.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Season deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -114,6 +188,49 @@ exports.addEpisode = async (req, res) => {
     });
 
     res.status(201).json(episode);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * UPDATE EPISODE
+ */
+exports.updateEpisode = async (req, res) => {
+  try {
+    const { episodeNumber, title } = req.body;
+
+    const episode = await Episode.findByIdAndUpdate(
+      req.params.id,
+      { episodeNumber, title },
+      { new: true }
+    );
+
+    if (!episode) return res.status(404).json({ error: "Episode not found" });
+
+    res.json({ message: "Episode updated", episode });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * DELETE EPISODE
+ */
+exports.deleteEpisode = async (req, res) => {
+  try {
+    const episode = await Episode.findById(req.params.id);
+    if (!episode) return res.status(404).json({ error: "Episode not found" });
+
+    // Remove episode from season
+    await Season.findByIdAndUpdate(episode.season, {
+      $pull: { episodes: episode._id }
+    });
+
+    // Delete the episode
+    await Episode.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Episode deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
