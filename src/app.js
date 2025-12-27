@@ -72,6 +72,7 @@ app.use("/api", require("./routes/view.routes"));
 app.use("/api", require("./routes/trending.routes"));
 app.use("/api", require("./routes/admin.movie.v2.routes"));
 app.use("/api", require("./routes/admin.series.v2.routes"));
+app.use("/api", require("./routes/abyss.routes"));
 
 
 module.exports = app;
