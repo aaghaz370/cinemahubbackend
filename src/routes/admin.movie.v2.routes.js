@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const { authenticate, checkPermission } = require("../middleware/auth.middleware");
 
 const {
   addWatchServer,
@@ -13,54 +12,17 @@ const {
   deleteDownloadServer
 } = require("../controllers/admin.movie.v2.controller");
 
-/* WATCH - Protected */
-router.post("/admin/v2/movie/:id/watch",
-  authenticate,
-  checkPermission('movies_edit'),
-  addWatchServer
-);
+/* WATCH */
+router.post("/admin/v2/movie/:id/watch", addWatchServer);
+router.put("/admin/v2/movie/:id/watch", updateWatchServer);
+router.delete("/admin/v2/movie/:id/watch", deleteWatchServer);
 
-router.put("/admin/v2/movie/:id/watch",
-  authenticate,
-  checkPermission('movies_edit'),
-  updateWatchServer
-);
+/* DOWNLOAD */
+router.post("/admin/v2/movie/:id/download/quality", addDownloadQuality);
+router.delete("/admin/v2/movie/:id/download/quality", deleteDownloadQuality);
 
-router.delete("/admin/v2/movie/:id/watch",
-  authenticate,
-  checkPermission('movies_delete'),
-  deleteWatchServer
-);
-
-/* DOWNLOAD - Protected */
-router.post("/admin/v2/movie/:id/download/quality",
-  authenticate,
-  checkPermission('movies_edit'),
-  addDownloadQuality
-);
-
-router.delete("/admin/v2/movie/:id/download/quality",
-  authenticate,
-  checkPermission('movies_delete'),
-  deleteDownloadQuality
-);
-
-router.post("/admin/v2/movie/:id/download/server",
-  authenticate,
-  checkPermission('movies_edit'),
-  addDownloadServer
-);
-
-router.put("/admin/v2/movie/:id/download/server",
-  authenticate,
-  checkPermission('movies_edit'),
-  updateDownloadServer
-);
-
-router.delete("/admin/v2/movie/:id/download/server",
-  authenticate,
-  checkPermission('movies_delete'),
-  deleteDownloadServer
-);
+router.post("/admin/v2/movie/:id/download/server", addDownloadServer);
+router.put("/admin/v2/movie/:id/download/server", updateDownloadServer);
+router.delete("/admin/v2/movie/:id/download/server", deleteDownloadServer);
 
 module.exports = router;
