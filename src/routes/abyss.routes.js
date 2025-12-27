@@ -32,6 +32,31 @@ const {
     getUploadUrl
 } = require('../controllers/abyss.controller');
 
+// Test endpoint to check API connectivity
+router.get('/admin/abyss/test', async (req, res) => {
+    const axios = require('axios');
+    const API_KEY = 'bae3b7ed62104a5c863a3c152c3ce8ba';
+
+    try {
+        // Test basic resources call
+        const response = await axios.get(`https://api.abyss.to/v1/resources?key=${API_KEY}&maxResults=5`);
+        res.json({
+            success: true,
+            message: 'Abyss API is working!',
+            data: response.data,
+            status: response.status
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
+            status: error.response?.status,
+            data: error.response?.data,
+            fullError: error.toString()
+        });
+    }
+});
+
 // ==================== RESOURCES ====================
 router.get('/admin/abyss/resources', getResources);
 router.get('/admin/abyss/quota', getQuota);
