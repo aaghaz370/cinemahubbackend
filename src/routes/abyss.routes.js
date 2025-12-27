@@ -22,14 +22,16 @@ const {
 
     // Remote Upload
     remoteUploadGD,
-    remoteUploadUrl,
 
     // Subtitles
     getSubtitles,
     deleteSubtitle,
 
     // Upload
-    getUploadUrl
+    getUploadUrl,
+
+    // Test
+    testConnection
 } = require('../controllers/abyss.controller');
 
 // Test endpoint to check API connectivity
@@ -77,7 +79,6 @@ router.delete('/admin/abyss/folders/:id', deleteFolder);
 
 // ==================== REMOTE UPLOAD ====================
 router.post('/admin/abyss/remote/google-drive', remoteUploadGD);
-router.post('/admin/abyss/remote/url', remoteUploadUrl);
 
 // ==================== SUBTITLES ====================
 router.get('/admin/abyss/subtitles/:id', getSubtitles);
