@@ -24,10 +24,10 @@ exports.addMovie = async (req, res) => {
 
     const director = directorData
       ? {
-          name: directorData.name,
-          profile: directorData.profile_path,
-          tmdbId: directorData.id
-        }
+        name: directorData.name,
+        profile: directorData.profile_path,
+        tmdbId: directorData.id
+      }
       : null;
 
     // 🏭 PRODUCERS
@@ -49,15 +49,15 @@ exports.addMovie = async (req, res) => {
         poster: data.poster_path,
         backdrop: data.backdrop_path,
         overview: data.overview,
-        genres: data.genres.map(g => g.name),
-        rating: data.vote_average,
-        language: data.original_language,
-        runtime: data.runtime,
+        genres: data.genres?.map(g => g.name) || [],
+        rating: data.vote_average || 0,
+        language: data.original_language || 'en',
+        runtime: data.runtime || 0,
 
-        originalTitle: data.original_title,
-        budget: data.budget,
-        revenue: data.revenue,
-        countries: data.production_countries.map(c => c.name),
+        originalTitle: data.original_title || title,
+        budget: data.budget || 0,
+        revenue: data.revenue || 0,
+        countries: data.production_countries?.map(c => c.name) || [],
 
         cast,
         director,
@@ -70,7 +70,7 @@ exports.addMovie = async (req, res) => {
 
     res.status(201).json(movie);
   } catch (err) {
-    console.error(err);
+    console.error('Error adding movie:', err);
     res.status(500).json({ error: err.message });
   }
 };
