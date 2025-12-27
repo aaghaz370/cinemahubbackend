@@ -74,6 +74,7 @@ app.use("/api", require("./routes/admin.movie.v2.routes"));
 app.use("/api", require("./routes/admin.series.v2.routes"));
 app.use("/api", require("./routes/abyss.routes"));
 app.use("/api", require("./routes/voe.routes"));
+app.use("/api", require("./routes/streamtape.routes"));
 
 
 module.exports = app;
