@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate, checkPermission } = require('../middleware/auth.middleware');
 
 const {
     // Resources
@@ -60,31 +61,31 @@ router.get('/admin/abyss/test', async (req, res) => {
 });
 
 // ==================== RESOURCES ====================
-router.get('/admin/abyss/resources', getResources);
-router.get('/admin/abyss/quota', getQuota);
+router.get('/admin/abyss/resources', authenticate, checkPermission('abyss_view'), getResources);
+router.get('/admin/abyss/quota', authenticate, checkPermission('abyss_view'), getQuota);
 
 // ==================== FILES ====================
-router.get('/admin/abyss/files/:id', getFileInfo);
-router.put('/admin/abyss/files/:id', renameFile);
-router.patch('/admin/abyss/files/:id/move', moveFile);
-router.delete('/admin/abyss/files/:id', deleteFile);
+router.get('/admin/abyss/files/:id', authenticate, checkPermission('abyss_view'), getFileInfo);
+router.put('/admin/abyss/files/:id', authenticate, checkPermission('abyss_upload'), renameFile);
+router.patch('/admin/abyss/files/:id/move', authenticate, checkPermission('abyss_upload'), moveFile);
+router.delete('/admin/abyss/files/:id', authenticate, checkPermission('abyss_delete'), deleteFile);
 
 // ==================== FOLDERS ====================
-router.post('/admin/abyss/folders', createFolder);
-router.get('/admin/abyss/folders', getFolders);
-router.get('/admin/abyss/folders/:id', getFolderInfo);
-router.put('/admin/abyss/folders/:id', renameFolder);
-router.patch('/admin/abyss/folders/:id/move', moveFolder);
-router.delete('/admin/abyss/folders/:id', deleteFolder);
+router.post('/admin/abyss/folders', authenticate, checkPermission('abyss_upload'), createFolder);
+router.get('/admin/abyss/folders', authenticate, checkPermission('abyss_view'), getFolders);
+router.get('/admin/abyss/folders/:id', authenticate, checkPermission('abyss_view'), getFolderInfo);
+router.put('/admin/abyss/folders/:id', authenticate, checkPermission('abyss_upload'), renameFolder);
+router.patch('/admin/abyss/folders/:id/move', authenticate, checkPermission('abyss_upload'), moveFolder);
+router.delete('/admin/abyss/folders/:id', authenticate, checkPermission('abyss_delete'), deleteFolder);
 
 // ==================== REMOTE UPLOAD ====================
-router.post('/admin/abyss/remote/google-drive', remoteUploadGD);
+router.post('/admin/abyss/remote/google-drive', authenticate, checkPermission('abyss_upload'), remoteUploadGD);
 
 // ==================== SUBTITLES ====================
-router.get('/admin/abyss/subtitles/:id', getSubtitles);
-router.delete('/admin/abyss/subtitles/:id', deleteSubtitle);
+router.get('/admin/abyss/subtitles/:id', authenticate, checkPermission('abyss_view'), getSubtitles);
+router.delete('/admin/abyss/subtitles/:id', authenticate, checkPermission('abyss_delete'), deleteSubtitle);
 
 // ==================== UPLOAD ====================
-router.get('/admin/abyss/upload-url', getUploadUrl);
+router.get('/admin/abyss/upload-url', authenticate, checkPermission('abyss_upload'), getUploadUrl);
 
 module.exports = router;
