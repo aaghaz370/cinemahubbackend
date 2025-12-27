@@ -6,19 +6,23 @@ exports.addMovie = async (req, res) => {
   try {
     const { title, tmdbId, watch = [], download = [] } = req.body;
 
+    console.log(`📥 Fetching TMDB data for: ${title} (ID: ${tmdbId})`);
+
     const { data } = await tmdb.get(`/movie/${tmdbId}`, {
       params: { append_to_response: "credits" }
     });
 
-    // 🎭 CAST
-    const cast = data.credits.cast.slice(0, 10).map(p => ({
+    console.log('✅ TMDB data received');
+
+    // 🎭 CAST - Safe handling
+    const cast = data.credits?.cast?.slice(0, 10).map(p => ({
       name: p.name,
       profile: p.profile_path,
       tmdbId: p.id
-    }));
+    })) || [];
 
-    // 🎬 DIRECTOR
-    const directorData = data.credits.crew.find(
+    // 🎬 DIRECTOR - Safe handling
+    const directorData = data.credits?.crew?.find(
       c => c.job === "Director"
     );
 
@@ -30,15 +34,15 @@ exports.addMovie = async (req, res) => {
       }
       : null;
 
-    // 🏭 PRODUCERS
-    const producers = data.credits.crew
-      .filter(c => c.job === "Producer")
-      .slice(0, 5)
-      .map(p => ({
+    // 🏭 PRODUCERS - Safe handling
+    const producers = data.credits?.crew
+      ?.filter(c => c.job === "Producer")
+      ?.slice(0, 5)
+      ?.map(p => ({
         name: p.name,
         profile: p.profile_path,
         tmdbId: p.id
-      }));
+      })) || [];
 
     const movie = await Movie.create({
       title,
@@ -68,9 +72,11 @@ exports.addMovie = async (req, res) => {
       download
     });
 
+    console.log(`✅ Movie created: ${movie.title}`);
     res.status(201).json(movie);
   } catch (err) {
-    console.error('Error adding movie:', err);
+    console.error('❌ Error adding movie:', err.message);
+    console.error('Stack:', err.stack);
     res.status(500).json({ error: err.message });
   }
 };
