@@ -123,3 +123,28 @@ exports.deleteMovie = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+/**
+ * TOGGLE Theatre Status - Add/Remove from "Now in Theatres"
+ */
+exports.toggleTheatre = async (req, res) => {
+  try {
+    const movie = await Movie.findById(req.params.id);
+
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+
+    // Toggle the isInTheatre status
+    movie.isInTheatre = !movie.isInTheatre;
+    await movie.save();
+
+    res.json({
+      message: movie.isInTheatre ? "🎬 Added to Theatres" : "❌ Removed from Theatres",
+      isInTheatre: movie.isInTheatre,
+      movie
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

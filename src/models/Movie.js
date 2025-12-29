@@ -48,6 +48,9 @@ const movieSchema = new mongoose.Schema(
 
     views: { type: Number, default: 0 },
 
+    // Theatre Watch Feature - Movies currently in theatres
+    isInTheatre: { type: Boolean, default: false },
+
     watch: [
       {
         server: String,

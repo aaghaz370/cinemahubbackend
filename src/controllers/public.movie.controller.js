@@ -35,3 +35,19 @@ exports.getMovieBySlug = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+/**
+ * GET /movies/theatre
+ * Get movies currently in theatres
+ */
+exports.getTheatreMovies = async (req, res) => {
+  try {
+    const movies = await Movie.find({ isInTheatre: true })
+      .sort({ createdAt: -1 })
+      .select("title slug metadata.poster metadata.rating metadata.genres");
+
+    res.json(movies);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
