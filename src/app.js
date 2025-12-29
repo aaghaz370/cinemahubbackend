@@ -109,6 +109,9 @@ app.use("/api", require("./routes/trending.routes"));
 app.use("/api", require("./routes/content.routes"));
 app.use("/api/recommendations", require("./routes/recommendation.routes"));
 
+// ================= USER ROUTES (Public - for logged in users) =================
+app.use("/api", require("./routes/user.routes"));
+
 // ================= SEARCH ROUTES (Medium rate limit) =================
 app.use("/api", searchLimiter, require("./routes/search.routes"));
 

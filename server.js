@@ -1,10 +1,19 @@
 require("dotenv").config();
 const app = require("./src/app");
-const connectDB = require("./src/config/db");
+const { connectDB, connectUserDB } = require("./src/config/db");
 
-connectDB();
+// Connect to both databases
+const startServer = async () => {
+  // Connect main content database
+  await connectDB();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+  // Connect user database (optional - won't crash if not set)
+  await connectUserDB();
+
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+};
+
+startServer();
