@@ -60,6 +60,13 @@ const adminUserSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'AdminUser'
+    },
+    // Password reset fields
+    resetToken: {
+        type: String
+    },
+    resetTokenExpiry: {
+        type: Date
     }
 }, {
     timestamps: true

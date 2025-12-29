@@ -229,4 +229,91 @@ exports.changePassword = async (req, res) => {
     }
 };
 
+// Forgot password - Request reset email
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const user = await AdminUser.findOne({ email: email.toLowerCase() });
+
+        // Always return success (security - don't reveal if email exists)
+        if (!user) {
+            return res.json({
+                success: true,
+                message: 'If the email exists, a reset link has been sent.'
+            });
+        }
+
+        // Generate reset token
+        const crypto = require('crypto');
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetExpiry = Date.now() + 3600000; // 1 hour
+
+        // Save token to user
+        user.resetToken = resetToken;
+        user.resetTokenExpiry = resetExpiry;
+        await user.save();
+
+        // Send email
+        const { sendPasswordResetEmail, isEmailConfigured } = require('../services/email.service');
+
+        if (isEmailConfigured()) {
+            await sendPasswordResetEmail(user.email, resetToken, user.name);
+        } else {
+            console.log('⚠️ Email not configured. Reset token:', resetToken);
+        }
+
+        res.json({
+            success: true,
+            message: 'If the email exists, a reset link has been sent.',
+            // Only include token in dev mode for testing
+            ...(process.env.NODE_ENV !== 'production' && { devToken: resetToken })
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Failed to process request' });
+    }
+};
+
+// Reset password with token
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password required' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters' });
+        }
+
+        // Find user with valid token
+        const user = await AdminUser.findOne({
+            resetToken: token,
+            resetTokenExpiry: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired reset token' });
+        }
+
+        // Update password and clear token
+        user.password = newPassword;
+        user.resetToken = undefined;
+        user.resetTokenExpiry = undefined;
+        await user.save();
+
+        res.json({ success: true, message: 'Password reset successfully. You can now login.' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
+};
+
 module.exports = exports;
+

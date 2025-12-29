@@ -5,6 +5,8 @@ const { authenticate, isSuperAdmin } = require('../middleware/auth.middleware');
 
 // Public routes
 router.post('/admin/auth/login', authController.login);
+router.post('/admin/auth/forgot-password', authController.forgotPassword);
+router.post('/admin/auth/reset-password', authController.resetPassword);
 
 // Protected routes
 router.get('/admin/auth/me', authenticate, authController.me);
