@@ -3,16 +3,15 @@ const Series = require("../models/Series");
 
 exports.getUnifiedContent = async (req, res) => {
   try {
+    // Fetch ALL movies and series - no limit for proper search
     const moviesRaw = await Movie.find()
       .sort({ createdAt: -1 })
-      .limit(20)
-      .select("title slug metadata.poster metadata.rating metadata.genres createdAt")
+      .select("title slug metadata.poster metadata.rating metadata.genres metadata.overview metadata.language createdAt")
       .lean();
 
     const seriesRaw = await Series.find()
       .sort({ createdAt: -1 })
-      .limit(20)
-      .select("title slug metadata.poster metadata.rating metadata.genres seasons createdAt")
+      .select("title slug metadata.poster metadata.rating metadata.genres metadata.overview metadata.language seasons createdAt")
       .lean();
 
     const movies = moviesRaw.map(m => ({
