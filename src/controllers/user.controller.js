@@ -75,9 +75,11 @@ exports.getProfile = async (req, res) => {
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
+                customAvatar: user.customAvatar,
+                originalGooglePhoto: user.originalGooglePhoto,
                 watchlist: user.watchlist,
                 continueWatching: user.continueWatching,
-                watchHistory: user.watchHistory.slice(-50), // Last 50
+                watchHistory: user.watchHistory.slice(-100),
                 preferences: user.preferences
             }
         });
