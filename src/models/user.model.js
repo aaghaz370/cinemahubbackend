@@ -34,33 +34,43 @@ const userSchema = new mongoose.Schema({
     // Watchlist (My List)
     watchlist: [{
         contentId: { type: String, required: true },
+        slug: { type: String },
         contentType: { type: String, enum: ['movie', 'series'], required: true },
         title: String,
         poster: String,
+        metadata: { type: mongoose.Schema.Types.Mixed }, // Full metadata for display
         addedAt: { type: Date, default: Date.now }
     }],
 
     // Continue Watching
     continueWatching: [{
         contentId: { type: String, required: true },
+        slug: { type: String },
         contentType: { type: String, enum: ['movie', 'series'], required: true },
         title: String,
         poster: String,
-        progress: { type: Number, default: 0 }, // Percentage or seconds
+        metadata: { type: mongoose.Schema.Types.Mixed },
+        progress: { type: Number, default: 0 },
+        season: Number,
+        episode: Number,
         episodeInfo: {
             seasonNumber: Number,
             episodeNumber: Number,
             episodeTitle: String
         },
+        timestamp: Date,
         lastWatched: { type: Date, default: Date.now }
     }],
 
     // Watch History
     watchHistory: [{
         contentId: { type: String, required: true },
+        slug: { type: String },
         contentType: { type: String, enum: ['movie', 'series'], required: true },
         title: String,
         poster: String,
+        metadata: { type: mongoose.Schema.Types.Mixed },
+        timestamp: Date,
         watchedAt: { type: Date, default: Date.now },
         episodeInfo: {
             seasonNumber: Number,
