@@ -21,31 +21,40 @@ exports.loginWithFirebase = async (req, res) => {
 
         // Find or create user
         let user = await User.findOne({ firebaseUid });
+        let isNewUser = false;
 
         if (!user) {
-            // Create new user
+            // Create new user - store Google photo as original
             user = new User({
                 firebaseUid,
                 email,
                 displayName: displayName || email.split('@')[0],
-                photoURL
+                photoURL: photoURL,
+                originalGooglePhoto: photoURL // Save original Google photo
             });
+            isNewUser = true;
             await user.save();
             console.log('✅ New user created:', email);
         } else {
-            // Update profile if changed
-            if (displayName) user.displayName = displayName;
-            if (photoURL) user.photoURL = photoURL;
-            await user.save();
+            // Existing user - DON'T overwrite custom name/avatar
+            // Only update originalGooglePhoto if not set
+            if (!user.originalGooglePhoto && photoURL) {
+                user.originalGooglePhoto = photoURL;
+                await user.save();
+            }
+            // Don't touch displayName or photoURL if user has customized them
         }
 
         res.json({
             success: true,
+            isNewUser,
             user: {
                 id: user._id,
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
+                customAvatar: user.customAvatar,
+                originalGooglePhoto: user.originalGooglePhoto,
                 watchlistCount: user.watchlist.length,
                 historyCount: user.watchHistory.length
             }
@@ -423,5 +432,41 @@ exports.getUserRequests = async (req, res) => {
         res.json({ success: true, requests });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch requests' });
+    }
+};
+
+// ================= RESET DATA =================
+
+// Reset all user data (for debugging/fresh start)
+exports.resetUserData = async (req, res) => {
+    try {
+        const { firebaseUid } = req.params;
+        const User = getUser();
+
+        const user = await User.findOne({ firebaseUid });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Reset all data but keep profile info
+        user.watchlist = [];
+        user.continueWatching = [];
+        user.watchHistory = [];
+        // Optionally reset avatar to Google photo
+        // user.photoURL = user.originalGooglePhoto;
+        // user.customAvatar = null;
+
+        await user.save();
+
+        console.log('🔄 User data reset:', user.email);
+
+        res.json({
+            success: true,
+            message: 'User data reset successfully'
+        });
+    } catch (error) {
+        console.error('Reset error:', error);
+        res.status(500).json({ error: 'Failed to reset data' });
     }
 };

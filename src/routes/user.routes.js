@@ -37,4 +37,7 @@ router.post('/user/:firebaseUid/sync', userController.syncData);
 router.post('/user/:firebaseUid/requests', userController.submitRequest);
 router.get('/user/:firebaseUid/requests', userController.getUserRequests);
 
+// ================= RESET (Debug) =================
+router.delete('/user/:firebaseUid/reset', userController.resetUserData);
+
 module.exports = router;
