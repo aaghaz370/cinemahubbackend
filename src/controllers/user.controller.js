@@ -86,6 +86,55 @@ exports.getProfile = async (req, res) => {
     }
 };
 
+// Update user profile (name, avatar)
+exports.updateProfile = async (req, res) => {
+    try {
+        const { firebaseUid } = req.params;
+        const { displayName, photoURL, useGooglePhoto } = req.body;
+
+        const User = getUser();
+        const user = await User.findOne({ firebaseUid });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update display name if provided
+        if (displayName && displayName.trim()) {
+            user.displayName = displayName.trim();
+        }
+
+        // Update photo
+        if (useGooglePhoto) {
+            // Reset to Google photo (stored in originalGooglePhoto or null)
+            user.photoURL = user.originalGooglePhoto || null;
+            user.customAvatar = null;
+        } else if (photoURL) {
+            // Store original Google photo if not already saved
+            if (!user.originalGooglePhoto && user.photoURL) {
+                user.originalGooglePhoto = user.photoURL;
+            }
+            user.photoURL = photoURL;
+            user.customAvatar = photoURL;
+        }
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Profile updated',
+            user: {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                customAvatar: user.customAvatar
+            }
+        });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+};
+
 // ================= WATCHLIST =================
 
 // Get watchlist

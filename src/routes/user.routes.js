@@ -14,6 +14,9 @@ router.post('/user/auth/login', userController.loginWithFirebase);
 // Get user profile
 router.get('/user/:firebaseUid/profile', userController.getProfile);
 
+// Update user profile (name, avatar)
+router.put('/user/:firebaseUid/profile', userController.updateProfile);
+
 // ================= WATCHLIST =================
 router.get('/user/:firebaseUid/watchlist', userController.getWatchlist);
 router.post('/user/:firebaseUid/watchlist', userController.addToWatchlist);

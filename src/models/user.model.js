@@ -30,6 +30,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    // Store original Google photo URL for restoration
+    originalGooglePhoto: {
+        type: String,
+        default: null
+    },
+    // Custom avatar selection (avatar URL or null)
+    customAvatar: {
+        type: String,
+        default: null
+    },
 
     // Watchlist (My List)
     watchlist: [{
