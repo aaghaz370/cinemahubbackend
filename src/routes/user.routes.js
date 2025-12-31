@@ -44,6 +44,10 @@ router.get('/leaderboard', watchStatsController.getLeaderboard);
 // Get user's rank
 router.get('/user/:firebaseUid/rank', watchStatsController.getUserRank);
 
+// ================= USERNAME =================
+// Check username availability
+router.get('/check-username', userController.checkUsernameAvailability);
+
 // ================= SYNC =================
 router.post('/user/:firebaseUid/sync', userController.syncData);
 

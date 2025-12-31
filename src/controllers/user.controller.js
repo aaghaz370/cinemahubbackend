@@ -8,6 +8,38 @@ const { getRequest } = require('../models/request.model');
 
 // ================= AUTH & PROFILE =================
 
+// Helper function to generate unique username
+const generateUniqueUsername = async (baseUsername, User) => {
+    let username = baseUsername;
+    let attempt = 0;
+    const maxAttempts = 50;
+
+    // Emoji/special suffixes for unique names
+    const suffixes = ['✨', '🎬', '🎭', '⭐', '🌟', '💫', '🎪', '🎯', '🔥', '💯', '_', '-', '.'];
+
+    while (attempt < maxAttempts) {
+        // Check if username is available
+        const existing = await User.findOne({ displayName: username });
+
+        if (!existing) {
+            return username; // Found unique username!
+        }
+
+        // Try with suffix
+        attempt++;
+        if (attempt <= suffixes.length) {
+            username = baseUsername + suffixes[attempt - 1];
+        } else {
+            // Use random numbers
+            const randomNum = Math.floor(Math.random() * 9999);
+            username = baseUsername + randomNum;
+        }
+    }
+
+    // Fallback: timestamp-based unique name
+    return baseUsername + Date.now();
+};
+
 // Login/Register with Firebase token
 exports.loginWithFirebase = async (req, res) => {
     try {
@@ -24,17 +56,22 @@ exports.loginWithFirebase = async (req, res) => {
         let isNewUser = false;
 
         if (!user) {
-            // Create new user - store Google photo as original
+            // Create new user - generate unique username
+            let baseUsername = displayName || email.split('@')[0];
+            baseUsername = baseUsername.substring(0, 25); // Leave room for suffixes
+
+            const uniqueUsername = await generateUniqueUsername(baseUsername, User);
+
             user = new User({
                 firebaseUid,
                 email,
-                displayName: displayName || email.split('@')[0],
+                displayName: uniqueUsername,
                 photoURL: photoURL,
                 originalGooglePhoto: photoURL // Save original Google photo
             });
             isNewUser = true;
             await user.save();
-            console.log('✅ New user created:', email);
+            console.log(`✅ New user created: ${email} with username: ${uniqueUsername}`);
         } else {
             // Existing user - DON'T overwrite custom name/avatar
             // Only update originalGooglePhoto if not set
@@ -112,7 +149,22 @@ exports.updateProfile = async (req, res) => {
 
         // Update display name if provided
         if (displayName && displayName.trim()) {
-            user.displayName = displayName.trim();
+            const newName = displayName.trim();
+
+            // Validate length
+            if (newName.length < 1 || newName.length > 30) {
+                return res.status(400).json({ error: 'Username must be 1-30 characters' });
+            }
+
+            // Check if username is taken by another user
+            if (newName !== user.displayName) {
+                const existingUser = await User.findOne({ displayName: newName });
+                if (existingUser && existingUser.firebaseUid !== firebaseUid) {
+                    return res.status(409).json({ error: 'Username already taken', available: false });
+                }
+            }
+
+            user.displayName = newName;
         }
 
         // Update photo
@@ -468,5 +520,56 @@ exports.resetUserData = async (req, res) => {
     } catch (error) {
         console.error('Reset error:', error);
         res.status(500).json({ error: 'Failed to reset data' });
+    }
+};
+
+// ================= USERNAME AVAILABILITY CHECK =================
+
+exports.checkUsernameAvailability = async (req, res) => {
+    try {
+        const { username, currentFirebaseUid } = req.query;
+
+        if (!username) {
+            return res.status(400).json({ error: 'Username required' });
+        }
+
+        const trimmedUsername = username.trim();
+
+        // Validate length
+        if (trimmedUsername.length < 1 || trimmedUsername.length > 30) {
+            return res.json({
+                available: false,
+                error: 'Username must be 1-30 characters'
+            });
+        }
+
+        const User = getUser();
+        const existing = await User.findOne({ displayName: trimmedUsername });
+
+        // If found and it's not the current user, it's taken
+        if (existing && existing.firebaseUid !== currentFirebaseUid) {
+            // Generate suggestions
+            const suggestions = [];
+            const suffixes = ['✨', '🎬', '⭐', '💫', '🔥'];
+
+            for (let i = 0; i < 3; i++) {
+                const suffix = suffixes[i] || Math.floor(Math.random() * 999);
+                suggestions.push(trimmedUsername + suffix);
+            }
+
+            return res.json({
+                available: false,
+                suggestions
+            });
+        }
+
+        // Available!
+        res.json({
+            available: true
+        });
+
+    } catch (error) {
+        console.error('Username check error:', error);
+        res.status(500).json({ error: 'Failed to check username' });
     }
 };

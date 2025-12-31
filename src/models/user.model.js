@@ -24,7 +24,11 @@ const userSchema = new mongoose.Schema({
     },
     displayName: {
         type: String,
-        default: 'User'
+        required: true,
+        unique: true,
+        minlength: 1,
+        maxlength: 30,
+        trim: true
     },
     photoURL: {
         type: String,
