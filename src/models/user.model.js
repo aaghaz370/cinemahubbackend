@@ -88,6 +88,35 @@ const userSchema = new mongoose.Schema({
         }
     }],
 
+    // ================= WATCH STATISTICS & ACHIEVEMENTS =================
+    watchStats: {
+        // Total watch time (in minutes)
+        totalWatchTime: { type: Number, default: 0 },
+
+        // Movie/Series counts
+        moviesWatched: { type: Number, default: 0 },
+        seriesWatched: { type: Number, default: 0 },
+        episodesWatched: { type: Number, default: 0 },
+
+        // Marathon tracking (continuous watching)
+        currentMarathonMinutes: { type: Number, default: 0 },
+        longestMarathonMinutes: { type: Number, default: 0 },
+        lastWatchEndTime: { type: Date, default: null }, // To detect 10min gap
+
+        // Time-based stats (for leaderboards)
+        todayMinutes: { type: Number, default: 0 },
+        weekMinutes: { type: Number, default: 0 },
+        monthMinutes: { type: Number, default: 0 },
+        yearMinutes: { type: Number, default: 0 },
+
+        // Reset tracking
+        lastResetDate: { type: Date, default: Date.now },
+        statsYear: { type: Number, default: new Date().getFullYear() },
+
+        // Last watch session
+        lastWatchDate: { type: Date, default: null }
+    },
+
     // User Preferences
     preferences: {
         favoriteGenres: [String],
@@ -98,16 +127,66 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Limit arrays to prevent bloat
+// Pre-save hook for cleanup and auto-reset
 userSchema.pre('save', function (next) {
-    // Keep only last 100 history items
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // ===== YEARLY RESET =====
+    // If year changed, reset yearly stats
+    if (this.watchStats && this.watchStats.statsYear !== currentYear) {
+        this.watchStats.yearMinutes = 0;
+        this.watchStats.statsYear = currentYear;
+        this.watchStats.lastResetDate = now;
+        console.log(`📅 Yearly stats reset for user: ${this.email}`);
+    }
+
+    // ===== TIME-BASED RESETS =====
+    if (this.watchStats && this.watchStats.lastResetDate) {
+        const daysSinceReset = Math.floor((now - new Date(this.watchStats.lastResetDate)) / (1000 * 60 * 60 * 24));
+
+        // Reset daily stats (if new day)
+        if (daysSinceReset >= 1) {
+            this.watchStats.todayMinutes = 0;
+        }
+
+        // Reset weekly stats (if 7+ days)
+        if (daysSinceReset >= 7) {
+            this.watchStats.weekMinutes = 0;
+        }
+        // Reset monthly stats (if 30+ days)
+        if (daysSinceReset >= 30) {
+            this.watchStats.monthMinutes = 0;
+        }
+    }
+
+    // ===== OLD DATA CLEANUP =====
+    // Remove watch history older than 1 year
+    if (this.watchHistory && this.watchHistory.length > 0) {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        const originalLength = this.watchHistory.length;
+        this.watchHistory = this.watchHistory.filter(item => {
+            const itemDate = new Date(item.timestamp);
+            return itemDate > oneYearAgo;
+        });
+
+        if (this.watchHistory.length < originalLength) {
+            console.log(`🗑️ Cleaned ${originalLength - this.watchHistory.length} old history items for ${this.email}`);
+        }
+    }
+
+    // Keep only last 100 history items (prevent bloat)
     if (this.watchHistory.length > 100) {
         this.watchHistory = this.watchHistory.slice(-100);
     }
+
     // Keep only last 50 continue watching
     if (this.continueWatching.length > 50) {
         this.continueWatching = this.continueWatching.slice(-50);
     }
+
     next();
 });
 

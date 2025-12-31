@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
+const watchStatsController = require('../controllers/watchStats.controller');
 
 // ================= AUTH =================
 // Login/Register with Firebase
@@ -29,6 +30,19 @@ router.delete('/user/:firebaseUid/continue-watching/:contentId', userController.
 // ================= WATCH HISTORY =================
 router.post('/user/:firebaseUid/history', userController.addToHistory);
 router.delete('/user/:firebaseUid/history', userController.clearHistory);
+
+// ================= WATCH STATS & ACHIEVEMENTS =================
+// Track watch session (real-time playback tracking)
+router.post('/user/:firebaseUid/watch-session', watchStatsController.trackWatchSession);
+
+// Get user's watch statistics
+router.get('/user/:firebaseUid/watch-stats', watchStatsController.getWatchStats);
+
+// Get leaderboard (query params: period=today|week|month|year|all, limit=10)
+router.get('/leaderboard', watchStatsController.getLeaderboard);
+
+// Get user's rank
+router.get('/user/:firebaseUid/rank', watchStatsController.getUserRank);
 
 // ================= SYNC =================
 router.post('/user/:firebaseUid/sync', userController.syncData);
