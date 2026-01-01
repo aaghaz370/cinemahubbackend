@@ -127,6 +127,9 @@ app.use("/api", require("./routes/abyss.routes"));
 app.use("/api", require("./routes/voe.routes"));
 app.use("/api", require("./routes/streamtape.routes"));
 
+// ================= MIGRATION ROUTES (Run once to populate data) =================
+app.use("/api", require("./routes/migration.routes"));
+
 // ================= ERROR HANDLER =================
 app.use(secureErrorHandler);
 
