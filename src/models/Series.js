@@ -30,7 +30,46 @@ const seriesSchema = new mongoose.Schema(
       language: String,
       originalTitle: String,
       countries: [String],
-      companies: [String]
+      companies: [String],
+
+      // ================= OTT PLATFORMS & VIDEOS =================
+      // Watch Providers (OTT Platforms)
+      watchProviders: {
+        flatrate: [  // Subscription services
+          {
+            provider_name: String,
+            logo_path: String,
+            provider_id: Number
+          }
+        ],
+        rent: [
+          {
+            provider_name: String,
+            logo_path: String,
+            provider_id: Number
+          }
+        ],
+        buy: [
+          {
+            provider_name: String,
+            logo_path: String,
+            provider_id: Number
+          }
+        ],
+        link: String
+      },
+
+      // Videos (Trailers, Clips, etc.)
+      videos: [
+        {
+          key: String,
+          name: String,
+          site: String,
+          type: String,
+          official: Boolean,
+          size: Number
+        }
+      ]
     },
 
     seasons: [

@@ -68,6 +68,45 @@ const movieSchema = new mongoose.Schema(
           }
         ]
       }
+    ],
+
+    // ================= OTT PLATFORMS & VIDEOS =================
+    // Watch Providers (OTT Platforms)
+    watchProviders: {
+      flatrate: [  // Subscription services (Netflix, Prime, etc.)
+        {
+          provider_name: String,
+          logo_path: String,
+          provider_id: Number
+        }
+      ],
+      rent: [  // Rent options
+        {
+          provider_name: String,
+          logo_path: String,
+          provider_id: Number
+        }
+      ],
+      buy: [  // Buy options
+        {
+          provider_name: String,
+          logo_path: String,
+          provider_id: Number
+        }
+      ],
+      link: String  // TMDB watch providers page
+    },
+
+    // Videos (Trailers, Clips, BTS, etc.)
+    videos: [
+      {
+        key: String,  // YouTube video ID
+        name: String,  // Video title
+        site: String,  // YouTube, Vimeo, etc.
+        type: String,  // Trailer, Teaser, Clip, Behind the Scenes, Bloopers, Featurette
+        official: Boolean,  // Official video or not
+        size: Number  // Video resolution (720, 1080)
+      }
     ]
   },
   { timestamps: true }
