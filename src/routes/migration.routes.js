@@ -12,4 +12,7 @@ router.get('/migrate/status', migrationController.getMigrationStatus);
 // Test TMDB data (Debug)
 router.get('/test/tmdb', testController.testTmdbData);
 
+// Test manual save (Debug)
+router.post('/test/save', testController.testManualSave);
+
 module.exports = router;
