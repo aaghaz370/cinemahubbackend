@@ -35,12 +35,15 @@ exports.migrateTmdbExtras = async (req, res) => {
                 if (watchProviders || videos.length > 0) {
                     if (watchProviders) {
                         movie.metadata.watchProviders = watchProviders;
+                        movie.markModified('metadata.watchProviders'); // Tell Mongoose to track change
                     }
                     if (videos.length > 0) {
                         movie.metadata.videos = videos;
+                        movie.markModified('metadata.videos'); // Tell Mongoose to track change
                     }
                     await movie.save();
                     results.movies.updated++;
+                    console.log(`✅ Updated: ${movie.title}`);
                 }
                 await sleep(300); // Rate limiting
             } catch (error) {
@@ -60,12 +63,15 @@ exports.migrateTmdbExtras = async (req, res) => {
                 if (watchProviders || videos.length > 0) {
                     if (watchProviders) {
                         show.metadata.watchProviders = watchProviders;
+                        show.markModified('metadata.watchProviders');
                     }
                     if (videos.length > 0) {
                         show.metadata.videos = videos;
+                        show.markModified('metadata.videos');
                     }
                     await show.save();
                     results.series.updated++;
+                    console.log(`✅ Updated: ${show.title}`);
                 }
                 await sleep(300);
             } catch (error) {
