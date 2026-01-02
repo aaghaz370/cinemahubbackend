@@ -16,14 +16,32 @@ exports.fetchWatchProviders = async (tmdbId, type = 'movie') => {
         const response = await tmdb.get(endpoint);
         const providers = response.data.results;
 
-        // Get India's watch providers (or US as fallback)
-        const inData = providers.IN || providers.US || {};
+        // Try multiple regions for better coverage
+        const regions = ['IN', 'US', 'GB']; // India, US, UK
+        let providerData = null;
+
+        for (const region of regions) {
+            if (providers[region] && (
+                providers[region].flatrate?.length > 0 ||
+                providers[region].rent?.length > 0 ||
+                providers[region].buy?.length > 0
+            )) {
+                providerData = providers[region];
+                console.log(`✅ Found providers in ${region} for ${type} ${tmdbId}`);
+                break; // Found data, stop searching
+            }
+        }
+
+        if (!providerData) {
+            console.log(`⚠️  No providers found for ${type} ${tmdbId}`);
+            return null; // No providers found in any region
+        }
 
         return {
-            flatrate: inData.flatrate || [],
-            rent: inData.rent || [],
-            buy: inData.buy || [],
-            link: inData.link || ''
+            flatrate: providerData.flatrate || [],
+            rent: providerData.rent || [],
+            buy: providerData.buy || [],
+            link: providerData.link || ''
         };
 
     } catch (error) {
