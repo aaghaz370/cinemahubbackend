@@ -40,18 +40,23 @@ exports.getTop10 = async (req, res) => {
     const movies = await Movie.find({
       createdAt: { $gte: fifteenDaysAgo }
     })
-      .sort({ views: -1 }) // Most views first
+      .sort({ views: -1, 'metadata.rating': -1 }) // Views first, then rating
       .limit(10);
 
     const series = await Series.find({
       createdAt: { $gte: fifteenDaysAgo }
     })
-      .sort({ views: -1 })
+      .sort({ views: -1, 'metadata.rating': -1 })
       .limit(10);
 
-    // Combine and sort by views
+    // Combine and sort by views first, rating second
     let top10 = [...movies, ...series]
-      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .sort((a, b) => {
+        const viewsDiff = (b.views || 0) - (a.views || 0);
+        if (viewsDiff !== 0) return viewsDiff;
+        // If views are equal, sort by rating
+        return (b.metadata?.rating || 0) - (a.metadata?.rating || 0);
+      })
       .slice(0, 10);
 
     // Fallback: If less than 10 items in last 15 days, fill with older content
