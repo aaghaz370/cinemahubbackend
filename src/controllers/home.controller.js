@@ -28,64 +28,71 @@ exports.homeSections = async (req, res) => {
   }
 };
 
-// ================= TOP 10 (Last 15 days + Most Views) =================
+// ================= TOP 10 MOVIES (Last 15 days + Most Views) =================
 
-exports.getTop10 = async (req, res) => {
+exports.getTop10Movies = async (req, res) => {
   try {
-    // Calculate date 15 days ago
     const fifteenDaysAgo = new Date();
     fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
 
-    // Fetch movies and series from last 15 days, sorted by views
-    const movies = await Movie.find({
-      createdAt: { $gte: fifteenDaysAgo }
-    })
-      .sort({ views: -1, 'metadata.rating': -1 }) // Views first, then rating
-      .limit(10);
-
-    const series = await Series.find({
+    // Fetch movies from last 15 days
+    let top10Movies = await Movie.find({
       createdAt: { $gte: fifteenDaysAgo }
     })
       .sort({ views: -1, 'metadata.rating': -1 })
       .limit(10);
 
-    // Combine and sort by views first, rating second
-    let top10 = [...movies, ...series]
-      .sort((a, b) => {
-        const viewsDiff = (b.views || 0) - (a.views || 0);
-        if (viewsDiff !== 0) return viewsDiff;
-        // If views are equal, sort by rating
-        return (b.metadata?.rating || 0) - (a.metadata?.rating || 0);
+    // Fallback: If less than 10 movies, fill with older high-view movies
+    if (top10Movies.length < 10) {
+      const needed = 10 - top10Movies.length;
+      const olderMovies = await Movie.find({
+        createdAt: { $lt: fifteenDaysAgo }
       })
-      .slice(0, 10);
+        .sort({ views: -1, 'metadata.rating': -1 })
+        .limit(needed);
 
-    // Fallback: If less than 10 items in last 15 days, fill with older content
-    if (top10.length < 10) {
-      const needed = 10 - top10.length;
-
-      const olderContent = await Promise.all([
-        Movie.find({
-          createdAt: { $lt: fifteenDaysAgo }
-        })
-          .sort({ views: -1 })
-          .limit(needed),
-        Series.find({
-          createdAt: { $lt: fifteenDaysAgo }
-        })
-          .sort({ views: -1 })
-          .limit(needed)
-      ]);
-
-      const fillerContent = [...olderContent[0], ...olderContent[1]]
-        .sort((a, b) => (b.views || 0) - (a.views || 0))
-        .slice(0, needed);
-
-      top10 = [...top10, ...fillerContent];
+      top10Movies = [...top10Movies, ...olderMovies];
     }
 
     res.json({
       success: true,
-      data: top10
+      data: top10Movies
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ================= TOP 10 SERIES (Last 15 days + Most Views) =================
+
+exports.getTop10Series = async (req, res) => {
+  try {
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+
+    // Fetch series from last 15 days
+    let top10Series = await Series.find({
+      createdAt: { $gte: fifteenDaysAgo }
+    })
+      .sort({ views: -1, 'metadata.rating': -1 })
+      .limit(10);
+
+    // Fallback: If less than 10 series, fill with older high-view series
+    if (top10Series.length < 10) {
+      const needed = 10 - top10Series.length;
+      const olderSeries = await Series.find({
+        createdAt: { $lt: fifteenDaysAgo }
+      })
+        .sort({ views: -1, 'metadata.rating': -1 })
+        .limit(needed);
+
+      top10Series = [...top10Series, ...olderSeries];
+    }
+
+    res.json({
+      success: true,
+      data: top10Series
     });
 
   } catch (err) {
