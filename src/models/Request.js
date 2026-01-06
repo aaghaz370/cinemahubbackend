@@ -60,24 +60,41 @@ const requestSchema = new mongoose.Schema({
 requestSchema.index({ userId: 1, createdAt: -1 });
 requestSchema.index({ status: 1, createdAt: -1 });
 
-// Get the user database connection (which is now initialized on module load)
-const userDb = getUserDbConnection();
+// ROBUST MODEL CREATION
+// This function gets called on every request to ensure we use the best available connection
+const getModel = () => {
+    const userDb = getUserDbConnection();
 
-let RequestModel;
-
-if (userDb) {
-    // Use User Database (Second MongoDB)
-    try {
-        RequestModel = userDb.model('Request', requestSchema);
-        console.log('✅ Request Model attached to User Database');
-    } catch (e) {
-        // If model already compiled
-        RequestModel = userDb.models.Request;
+    if (userDb && userDb.readyState === 1) {
+        // User DB is connected and ready
+        try {
+            if (userDb.models.Request) return userDb.models.Request;
+            return userDb.model('Request', requestSchema);
+        } catch (e) {
+            console.warn('⚠️ Error attaching Request to UserDB, falling back:', e.message);
+        }
     }
-} else {
-    // Fallback to Default Database (if User DB not configured)
-    console.log('⚠️ Request Model fallback to Default Database');
-    RequestModel = mongoose.model('Request', requestSchema);
-}
 
-module.exports = RequestModel;
+    // Fallback to default connection if UserDB is not ready
+    if (mongoose.models.Request) return mongoose.models.Request;
+    return mongoose.model('Request', requestSchema);
+};
+
+// Export a wrapped "Proxy" object that forwards calls to the correct model
+// This ensures that even if DB connects LATER, we switch to it dynamically
+const RequestProxy = {
+    find: (...args) => getModel().find(...args),
+    findOne: (...args) => getModel().findOne(...args),
+    findById: (...args) => getModel().findById(...args),
+    findByIdAndUpdate: (...args) => getModel().findByIdAndUpdate(...args),
+    findByIdAndDelete: (...args) => getModel().findByIdAndDelete(...args),
+    countDocuments: (...args) => getModel().countDocuments(...args),
+    aggregate: (...args) => getModel().aggregate(...args),
+
+    // For 'new Request()' we need a manual approach in the controller
+    // OR we expose the schema and model getter
+    get model() { return getModel(); },
+    schema: requestSchema
+};
+
+module.exports = RequestProxy;
