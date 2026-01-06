@@ -22,6 +22,8 @@ exports.testConnection = async (req, res) => {
 // ================= USER - CREATE REQUEST =================
 exports.createRequest = async (req, res) => {
     try {
+        console.log('📝 Request received:', JSON.stringify(req.body, null, 2));
+
         const {
             userId,
             userName,

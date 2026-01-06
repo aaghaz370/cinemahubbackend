@@ -59,24 +59,6 @@ const requestSchema = new mongoose.Schema({
 requestSchema.index({ userId: 1, createdAt: -1 });
 requestSchema.index({ status: 1, createdAt: -1 });
 
-// Lazy loading function to get the model with User DB connection
-let RequestModel = null;
-
-function getRequestModel() {
-    if (RequestModel) return RequestModel;
-
-    const { getUserDbConnection } = require('../config/db');
-    const userDb = getUserDbConnection();
-
-    if (userDb) {
-        console.log('✅ Using User Database for Requests');
-        RequestModel = userDb.model('Request', requestSchema);
-    } else {
-        console.log('⚠️ Using Default Database for Requests (User DB not available)');
-        RequestModel = mongoose.model('Request', requestSchema);
-    }
-
-    return RequestModel;
-}
-
-module.exports = getRequestModel();
+// Use default mongoose connection (same as Movies/Series)
+// This ensures it works immediately - can optimize to User DB later
+module.exports = mongoose.model('Request', requestSchema);
