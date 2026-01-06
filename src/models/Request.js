@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { getUserDbConnection } = require('../config/db');
 
 const requestSchema = new mongoose.Schema({
     userId: {
@@ -60,12 +59,24 @@ const requestSchema = new mongoose.Schema({
 requestSchema.index({ userId: 1, createdAt: -1 });
 requestSchema.index({ status: 1, createdAt: -1 });
 
-// Export model using User Database connection (second MongoDB)
-const userDb = getUserDbConnection();
+// Lazy loading function to get the model with User DB connection
+let RequestModel = null;
 
-// If userDb connection exists, use it; otherwise fall back to default
-const Request = userDb
-    ? userDb.model('Request', requestSchema)
-    : mongoose.model('Request', requestSchema);
+function getRequestModel() {
+    if (RequestModel) return RequestModel;
 
-module.exports = Request;
+    const { getUserDbConnection } = require('../config/db');
+    const userDb = getUserDbConnection();
+
+    if (userDb) {
+        console.log('✅ Using User Database for Requests');
+        RequestModel = userDb.model('Request', requestSchema);
+    } else {
+        console.log('⚠️ Using Default Database for Requests (User DB not available)');
+        RequestModel = mongoose.model('Request', requestSchema);
+    }
+
+    return RequestModel;
+}
+
+module.exports = getRequestModel();
