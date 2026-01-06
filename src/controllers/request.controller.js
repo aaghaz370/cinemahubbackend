@@ -63,10 +63,12 @@ exports.createRequest = async (req, res) => {
         });
 
     } catch (error) {
+        console.error('❌ Create Request Error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to create request',
-            error: error.message
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
