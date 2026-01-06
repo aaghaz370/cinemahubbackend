@@ -61,8 +61,7 @@ exports.createRequest = async (req, res) => {
         }
 
         // Create new request
-        const RequestModel = Request.model;
-        const newRequest = new RequestModel({
+        const newRequest = new Request({
             userId,
             userName,
             userEmail,
