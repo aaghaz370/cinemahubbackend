@@ -1,5 +1,24 @@
 const Request = require('../models/Request');
 
+// ================= TEST - VERIFY MODEL =================
+exports.testConnection = async (req, res) => {
+    try {
+        const count = await Request.countDocuments();
+        res.json({
+            success: true,
+            message: 'Request model working',
+            count: count,
+            modelName: Request.modelName
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Request model error',
+            error: error.message
+        });
+    }
+};
+
 // ================= USER - CREATE REQUEST =================
 exports.createRequest = async (req, res) => {
     try {

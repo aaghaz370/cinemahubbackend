@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/request.controller');
 
+// ================= TEST ROUTE =================
+router.get('/test', requestController.testConnection);
+
 // ================= USER ROUTES =================
 // Create new request
 router.post('/create', requestController.createRequest);
