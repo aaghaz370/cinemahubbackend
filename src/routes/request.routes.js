@@ -26,6 +26,20 @@ router.get('/ping', (req, res) => {
 // ================= TEST ROUTE =================
 router.get('/test', requestController.testConnection);
 
+// ================= TEST CREATE (Debug Only) =================
+router.post('/test-create', async (req, res) => {
+    try {
+        console.log('🧪 Test-create received body:', req.body);
+        res.json({
+            success: true,
+            message: 'Test create endpoint working',
+            receivedBody: req.body
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // ================= USER ROUTES =================
 // Create new request
 router.post('/create', requestController.createRequest);
