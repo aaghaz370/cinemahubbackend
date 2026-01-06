@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/request.controller');
 
+// ================= PING ROUTE (Simple test) =================
+router.get('/ping', (req, res) => {
+    console.log('🏓 Ping received!');
+    res.json({
+        success: true,
+        message: 'Request routes are working!',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // ================= TEST ROUTE =================
 router.get('/test', requestController.testConnection);
 
