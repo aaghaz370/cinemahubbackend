@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getUserDbConnection } = require('../config/db');
 
 const requestSchema = new mongoose.Schema({
     userId: {
@@ -59,6 +60,24 @@ const requestSchema = new mongoose.Schema({
 requestSchema.index({ userId: 1, createdAt: -1 });
 requestSchema.index({ status: 1, createdAt: -1 });
 
-// Use default mongoose connection (same as Movies/Series)
-// This ensures it works immediately - can optimize to User DB later
-module.exports = mongoose.model('Request', requestSchema);
+// Get the user database connection (which is now initialized on module load)
+const userDb = getUserDbConnection();
+
+let RequestModel;
+
+if (userDb) {
+    // Use User Database (Second MongoDB)
+    try {
+        RequestModel = userDb.model('Request', requestSchema);
+        console.log('✅ Request Model attached to User Database');
+    } catch (e) {
+        // If model already compiled
+        RequestModel = userDb.models.Request;
+    }
+} else {
+    // Fallback to Default Database (if User DB not configured)
+    console.log('⚠️ Request Model fallback to Default Database');
+    RequestModel = mongoose.model('Request', requestSchema);
+}
+
+module.exports = RequestModel;

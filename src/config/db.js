@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+require("dotenv").config(); // Ensure env vars are loaded
 
 // Main Content Database (Movies, Series, Admin)
 const connectDB = async () => {
@@ -14,30 +15,27 @@ const connectDB = async () => {
 // User Database Connection (Watchlist, History, Profiles)
 let userDbConnection = null;
 
+const USER_DB_URI = process.env.USER_MONGO_URI;
+
+if (USER_DB_URI) {
+  // Initialize immediately so models can attach to it
+  userDbConnection = mongoose.createConnection(USER_DB_URI);
+
+  userDbConnection.on('connected', () => {
+    console.log("✅ User MongoDB Connected");
+  });
+
+  userDbConnection.on('error', (err) => {
+    console.error("❌ User MongoDB Error:", err.message);
+  });
+} else {
+  console.log("⚠️ USER_MONGO_URI not set - User features will use localStorage only");
+}
+
 const connectUserDB = async () => {
-  try {
-    const USER_DB_URI = process.env.USER_MONGO_URI;
-
-    if (!USER_DB_URI) {
-      console.log("⚠️ USER_MONGO_URI not set - User features will use localStorage only");
-      return null;
-    }
-
-    userDbConnection = mongoose.createConnection(USER_DB_URI);
-
-    userDbConnection.on('connected', () => {
-      console.log("✅ User MongoDB Connected");
-    });
-
-    userDbConnection.on('error', (err) => {
-      console.error("❌ User MongoDB Error:", err.message);
-    });
-
-    return userDbConnection;
-  } catch (err) {
-    console.error("❌ User MongoDB Connection Error:", err.message);
-    return null;
-  }
+  // Just a placeholder now to keep existing flow waiting if needed
+  if (!userDbConnection) return null;
+  return userDbConnection;
 };
 
 const getUserDbConnection = () => userDbConnection;
