@@ -133,8 +133,11 @@ app.use("/api", require("./routes/streamtape.routes"));
 // ================= MIGRATION ROUTES (Run once to populate data) =================
 app.use("/api", require("./routes/migration.routes"));
 
-// ================= REQUEST ROUTES (User content requests) =================
+// ================= REQUEST ROUTES (Old - being deprecated) =================
 app.use("/api/requests", require("./routes/request.routes"));
+
+// ================= USER REQUEST ROUTES (New - Telegram integrated) =================
+app.use("/api/user-requests", require("./routes/userRequest.routes"));
 
 // ================= ERROR HANDLER =================
 app.use(secureErrorHandler);

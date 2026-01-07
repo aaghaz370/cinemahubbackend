@@ -10,6 +10,10 @@ const startServer = async () => {
   // Connect user database (optional - won't crash if not set)
   await connectUserDB();
 
+  // Initialize Telegram bot
+  const { initBot } = require('./src/services/telegram.service');
+  initBot();
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
