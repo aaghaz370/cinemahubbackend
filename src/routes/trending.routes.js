@@ -1,18 +1,27 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const Movie = require("../models/Movie");
+const trendingController = require('../controllers/trending.controller');
 
-router.get("/trending", async (req, res) => {
-  try {
-    const movies = await Movie.find()
-      .sort({ views: -1, createdAt: -1 })
-      .limit(12)
-      .select("title slug metadata.poster metadata.rating");
+// Main trending endpoint
+router.get('/', trendingController.getTrending);
 
-    res.json(movies);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// Debug endpoint - check series count
+router.get('/debug', async (req, res) => {
+  const Series = require('../models/Series');
+  const Movie = require('../models/Movie');
+
+  const seriesCount = await Series.countDocuments();
+  const movieCount = await Movie.countDocuments();
+
+  const sampleSeries = await Series.find().limit(3).select('title slug');
+  const sampleMovies = await Movie.find().limit(3).select('title slug');
+
+  res.json({
+    totalSeries: seriesCount,
+    totalMovies: movieCount,
+    sampleSeries,
+    sampleMovies
+  });
 });
 
 module.exports = router;
