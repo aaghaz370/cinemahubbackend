@@ -116,7 +116,7 @@ app.use("/api", require("./routes/user.routes"));
 app.use("/api", searchLimiter, require("./routes/search.routes"));
 
 // ================= TRENDING ROUTES =================
-app.use("/api", require("./routes/trending.routes"));
+app.use("/api/trending", require("./routes/trending.routes"));
 
 // ================= AUTH ROUTES (Strict rate limit for login) =================
 app.use("/api", require("./routes/auth.routes"));
