@@ -115,33 +115,6 @@ const movieSchema = new mongoose.Schema(
 movieSchema.index({ title: "text" });
 movieSchema.index({ slug: 1 });
 
-// ==================== NETFLIX-STYLE BADGE SYSTEM ====================
-// Virtual field: Calculate if movie should show "Recently added" badge
-// Badge shows for 20 days after creation
-movieSchema.virtual('badge').get(function () {
-  const twentyDaysAgo = new Date();
-  twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
-
-  // If movie was created in last 20 days
-  if (this.createdAt >= twentyDaysAgo) {
-    return {
-      show: true,
-      type: 'recently-added',
-      text: 'Recently added'
-    };
-  }
-
-  return {
-    show: false,
-    type: null,
-    text: null
-  };
-});
-
-// Ensure virtual fields are included in JSON/Object conversion
-movieSchema.set('toJSON', { virtuals: true });
-movieSchema.set('toObject', { virtuals: true });
-
 module.exports = mongoose.model("Movie", movieSchema);
 
 
