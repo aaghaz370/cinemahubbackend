@@ -3,16 +3,18 @@ const Series = require("../models/Series");
 
 exports.getTrending = async (req, res) => {
   try {
+    console.log('🔥 TRENDING REQUEST RECEIVED');
+
     // ==================== SMART TRENDING ALGORITHM ====================
-    // Goal: Show 16 trending items (prefer 8 movies + 8 series mix)
-    // But flexible: if series < 8, fill with more movies
-    // Exclude: Items in Top 10 Movies/Series (last 15 days)
+    // Goal: ALWAYS return exactly 16 items
+    // Priority: Max 8 series, rest fill with movies
+    // Exclude: Top 10 Movies/Series from last 15 days
     // ==================================================================
 
     const fifteenDaysAgo = new Date();
     fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
 
-    // Step 1: Get Top 10 IDs to exclude (last 15 days only)
+    // Step 1: Get Top 10 IDs to exclude
     const [top10Movies, top10Series] = await Promise.all([
       Movie.find({ createdAt: { $gte: fifteenDaysAgo } })
         .sort({ views: -1, 'metadata.rating': -1 })
@@ -27,25 +29,25 @@ exports.getTrending = async (req, res) => {
     const excludeMovieIds = top10Movies.map(m => m._id);
     const excludeSeriesIds = top10Series.map(s => s._id);
 
-    console.log('📊 Excluding Top 10 Movies:', excludeMovieIds.length);
-    console.log('📊 Excluding Top 10 Series:', excludeSeriesIds.length);
+    console.log('📊 Top 10 Movies excluded:', excludeMovieIds.length);
+    console.log('📊 Top 10 Series excluded:', excludeSeriesIds.length);
 
-    // Step 2: Fetch ALL available series (excluding Top 10)
-    const allSeries = await Series.find({
+    // Step 2: Fetch available series (max 8)
+    const availableSeries = await Series.find({
       _id: { $nin: excludeSeriesIds }
     })
       .sort({ views: -1, createdAt: -1 })
+      .limit(8)
       .select("title slug metadata.poster metadata.rating views createdAt");
 
-    console.log('📺 Available Series:', allSeries.length);
+    console.log('📺 Available Series fetched:', availableSeries.length);
 
-    // Step 3: Calculate how many movies we need
-    const seriesCount = Math.min(allSeries.length, 8); // Max 8 series
-    const moviesNeeded = 16 - seriesCount; // Fill remaining with movies
+    // Step 3: Calculate movies needed (16 total - series count)
+    const moviesNeeded = 16 - availableSeries.length;
 
-    console.log('🎯 Taking', seriesCount, 'series and', moviesNeeded, 'movies');
+    console.log('🎯 Movies needed:', moviesNeeded);
 
-    // Step 4: Fetch required number of movies (excluding Top 10)
+    // Step 4: Fetch required movies
     const trendingMovies = await Movie.find({
       _id: { $nin: excludeMovieIds }
     })
@@ -53,20 +55,20 @@ exports.getTrending = async (req, res) => {
       .limit(moviesNeeded)
       .select("title slug metadata.poster metadata.rating views createdAt");
 
-    console.log('🎬 Trending Movies:', trendingMovies.length);
+    console.log('🎬 Movies fetched:', trendingMovies.length);
 
-    // Step 5: Combine series (all or max 8) + movies
-    const selectedSeries = allSeries.slice(0, seriesCount);
+    // Step 5: Combine and sort
+    const combined = [...availableSeries, ...trendingMovies];
 
-    const trending = [...selectedSeries, ...trendingMovies]
-      .sort((a, b) => {
-        // Sort by views DESC, then by date DESC
-        const viewsDiff = (b.views || 0) - (a.views || 0);
-        if (viewsDiff !== 0) return viewsDiff;
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
+    const trending = combined.sort((a, b) => {
+      const viewsDiff = (b.views || 0) - (a.views || 0);
+      if (viewsDiff !== 0) return viewsDiff;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
-    console.log('✅ Total Trending:', trending.length, '(', selectedSeries.length, 'series +', trendingMovies.length, 'movies)');
+    console.log('✅ FINAL RESULT:', trending.length, 'items');
+    console.log('   - Series:', availableSeries.length);
+    console.log('   - Movies:', trendingMovies.length);
 
     res.json(trending);
   } catch (err) {
