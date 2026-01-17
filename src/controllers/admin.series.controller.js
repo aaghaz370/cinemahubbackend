@@ -113,10 +113,12 @@ exports.addSeason = async (req, res) => {
 
 
     // Update series and touch it to update updatedAt
-    await Series.findByIdAndUpdate(seriesId, {
+    const updatedSeries = await Series.findByIdAndUpdate(seriesId, {
       $push: { seasons: season._id },
       $currentDate: { updatedAt: true }
-    });
+    }, { new: true });
+
+    console.log(`✅ Series updated: ${updatedSeries?.title} - New updatedAt: ${updatedSeries?.updatedAt}`);
 
     res.status(201).json(season);
   } catch (err) {
@@ -192,9 +194,11 @@ exports.addEpisode = async (req, res) => {
 
     // Touch Series document to update its updatedAt timestamp
     if (season) {
-      await Series.findByIdAndUpdate(season.series, {
+      const updatedSeries = await Series.findByIdAndUpdate(season.series, {
         $currentDate: { updatedAt: true }
-      });
+      }, { new: true });
+
+      console.log(`✅ Series updated via episode: ${updatedSeries?.title} - New updatedAt: ${updatedSeries?.updatedAt}`);
     }
 
     res.status(201).json(episode);
