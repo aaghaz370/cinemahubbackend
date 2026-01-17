@@ -112,8 +112,10 @@ exports.addSeason = async (req, res) => {
     });
 
 
+    // Update series and touch it to update updatedAt
     await Series.findByIdAndUpdate(seriesId, {
-      $push: { seasons: season._id }
+      $push: { seasons: season._id },
+      $currentDate: { updatedAt: true }
     });
 
     res.status(201).json(season);
@@ -183,9 +185,17 @@ exports.addEpisode = async (req, res) => {
       download: download || []
     });
 
-    await Season.findByIdAndUpdate(seasonId, {
+    // Update season
+    const season = await Season.findByIdAndUpdate(seasonId, {
       $push: { episodes: episode._id }
     });
+
+    // Touch Series document to update its updatedAt timestamp
+    if (season) {
+      await Series.findByIdAndUpdate(season.series, {
+        $currentDate: { updatedAt: true }
+      });
+    }
 
     res.status(201).json(episode);
   } catch (err) {
