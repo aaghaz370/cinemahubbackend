@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const actorSchema = new mongoose.Schema({
     tmdbId: {
-        type: Number,
+        type: mongoose.Schema.Types.Mixed, // Can be Number or String
         unique: true,
         required: true,
         index: true

@@ -70,7 +70,10 @@ exports.syncActorsFromContent = async (req, res) => {
             if (!movie.metadata?.cast) continue;
 
             for (const castMember of movie.metadata.cast.slice(0, 10)) { // Top 10 cast
-                if (!castMember.id) continue;
+                // Skip if no ID or if ID looks like MongoDB ObjectId (24 hex chars)
+                if (!castMember.id || typeof castMember.id === 'string' && castMember.id.match(/^[0-9a-fA-F]{24}$/)) {
+                    continue;
+                }
 
                 if (!actorMap.has(castMember.id)) {
                     actorMap.set(castMember.id, {
@@ -94,7 +97,10 @@ exports.syncActorsFromContent = async (req, res) => {
             if (!show.metadata?.cast) continue;
 
             for (const castMember of show.metadata.cast.slice(0, 10)) {
-                if (!castMember.id) continue;
+                // Skip if no ID or if ID looks like MongoDB ObjectId (24 hex chars)
+                if (!castMember.id || typeof castMember.id === 'string' && castMember.id.match(/^[0-9a-fA-F]{24}$/)) {
+                    continue;
+                }
 
                 if (!actorMap.has(castMember.id)) {
                     actorMap.set(castMember.id, {
