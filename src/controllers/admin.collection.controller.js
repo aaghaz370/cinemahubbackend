@@ -57,14 +57,23 @@ exports.getAllCollections = async (req, res) => {
     }
 };
 
-// ================= GET COLLECTION BY SLUG (WITH POPULATED ITEMS) =================
+// ================= GET COLLECTION BY SLUG OR ID =================
 exports.getCollectionBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
+        let collection;
 
-        const collection = await Collection.findOne({ slug, isActive: true });
+        // Check if the param is a valid MongoDB ObjectId
+        const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
+
+        if (isValidObjectId) {
+            collection = await Collection.findOne({ _id: slug, isActive: true });
+        } else {
+            collection = await Collection.findOne({ slug, isActive: true });
+        }
 
         if (!collection) {
+            console.log('Collection not found for:', slug);
             return res.status(404).json({ error: 'Collection not found' });
         }
 
