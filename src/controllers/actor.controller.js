@@ -1,6 +1,7 @@
 const Actor = require('../models/Actor');
 const Movie = require('../models/Movie');
 const Series = require('../models/Series');
+const axios = require('axios');
 
 /**
  * Get actor details by TMDB ID
@@ -24,17 +25,40 @@ exports.getActorById = async (req, res) => {
             });
         }
 
+        // Fetch full actor details from TMDB if we don't have bio
+        if (!actor.biography && process.env.TMDB_API_KEY) {
+            try {
+                const tmdbResponse = await axios.get(
+                    `https://api.themoviedb.org/3/person/${actorId}?api_key=${process.env.TMDB_API_KEY}`
+                );
+
+                // Update actor with full details
+                actor.biography = tmdbResponse.data.biography;
+                actor.birthday = tmdbResponse.data.birthday;
+                actor.place_of_birth = tmdbResponse.data.place_of_birth;
+                actor.known_for_department = tmdbResponse.data.known_for_department;
+                actor.gender = tmdbResponse.data.gender;
+                await actor.save();
+            } catch (tmdbError) {
+                console.error('TMDB fetch failed, using basic data:', tmdbError.message);
+            }
+        }
+
         // Get all movies and series featuring this actor
+        console.log('Fetching filmography for actor:', actorId);
+        console.log('MovieIds:', actor.movieIds);
+        console.log('SeriesIds:', actor.seriesIds);
+
         const [movies, series] = await Promise.all([
             Movie.find({
-                _id: { $in: actor.movieIds },
-                isActive: true
+                _id: { $in: actor.movieIds }
             }).select('title slug poster metadata type createdAt'),
             Series.find({
-                _id: { $in: actor.seriesIds },
-                isActive: true
+                _id: { $in: actor.seriesIds }
             }).select('title slug poster metadata type createdAt')
         ]);
+
+        console.log(`Found ${movies.length} movies and ${series.length} series`);
 
         res.json({
             success: true,
