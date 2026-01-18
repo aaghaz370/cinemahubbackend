@@ -70,25 +70,25 @@ exports.syncActorsFromContent = async (req, res) => {
             if (!movie.metadata?.cast) continue;
 
             for (const castMember of movie.metadata.cast.slice(0, 10)) { // Top 10 cast
+                // Use tmdbId field from cast data
+                const actorId = castMember.tmdbId || castMember.id;
+
                 // Skip if no ID or if ID looks like MongoDB ObjectId (24 hex chars)
-                if (!castMember.id || typeof castMember.id === 'string' && castMember.id.match(/^[0-9a-fA-F]{24}$/)) {
+                if (!actorId || typeof actorId === 'string' && actorId.match(/^[0-9a-fA-F]{24}$/)) {
                     continue;
                 }
 
-                if (!actorMap.has(castMember.id)) {
-                    actorMap.set(castMember.id, {
-                        tmdbId: castMember.id,
+                if (!actorMap.has(actorId)) {
+                    actorMap.set(actorId, {
+                        tmdbId: actorId,
                         name: castMember.name,
-                        profile_path: castMember.profile_path,
-                        character: castMember.character,
+                        profile_path: castMember.profile,
                         popularity: castMember.popularity || 0,
-                        known_for_department: castMember.known_for_department,
-                        gender: castMember.gender,
                         movieIds: [],
                         seriesIds: []
                     });
                 }
-                actorMap.get(castMember.id).movieIds.push(movie._id);
+                actorMap.get(actorId).movieIds.push(movie._id);
             }
         }
 
@@ -97,25 +97,25 @@ exports.syncActorsFromContent = async (req, res) => {
             if (!show.metadata?.cast) continue;
 
             for (const castMember of show.metadata.cast.slice(0, 10)) {
+                // Use tmdbId field from cast data
+                const actorId = castMember.tmdbId || castMember.id;
+
                 // Skip if no ID or if ID looks like MongoDB ObjectId (24 hex chars)
-                if (!castMember.id || typeof castMember.id === 'string' && castMember.id.match(/^[0-9a-fA-F]{24}$/)) {
+                if (!actorId || typeof actorId === 'string' && actorId.match(/^[0-9a-fA-F]{24}$/)) {
                     continue;
                 }
 
-                if (!actorMap.has(castMember.id)) {
-                    actorMap.set(castMember.id, {
-                        tmdbId: castMember.id,
+                if (!actorMap.has(actorId)) {
+                    actorMap.set(actorId, {
+                        tmdbId: actorId,
                         name: castMember.name,
-                        profile_path: castMember.profile_path,
-                        character: castMember.character,
+                        profile_path: castMember.profile,
                         popularity: castMember.popularity || 0,
-                        known_for_department: castMember.known_for_department,
-                        gender: castMember.gender,
                         movieIds: [],
                         seriesIds: []
                     });
                 }
-                actorMap.get(castMember.id).seriesIds.push(show._id);
+                actorMap.get(actorId).seriesIds.push(show._id);
             }
         }
 
