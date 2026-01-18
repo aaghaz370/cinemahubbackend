@@ -109,6 +109,7 @@ app.use("/api", require("./routes/trending.routes"));
 app.use("/api", require("./routes/content.routes"));
 app.use("/api/recommendations", require("./routes/recommendation.routes"));
 app.use("/api/collections", require("./routes/collection.routes"));
+app.use("/api/actors", require("./routes/actor.routes"));
 
 // ================= USER ROUTES (Public - for logged in users) =================
 app.use("/api", require("./routes/user.routes"));
