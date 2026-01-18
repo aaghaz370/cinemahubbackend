@@ -144,9 +144,12 @@ exports.syncActorsFromContent = async (req, res) => {
         });
     } catch (error) {
         console.error('Error syncing actors:', error);
+        console.error('Error stack:', error.stack);
+        console.error('Error message:', error.message);
         res.status(500).json({
             success: false,
-            error: 'Failed to sync actors'
+            error: 'Failed to sync actors',
+            details: error.message
         });
     }
 };
