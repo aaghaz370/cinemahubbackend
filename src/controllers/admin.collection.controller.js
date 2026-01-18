@@ -6,16 +6,49 @@ const slugify = require('slugify');
 // ================= GET ALL COLLECTIONS =================
 exports.getAllCollections = async (req, res) => {
     try {
-        const { active } = req.query;
+        const { active, populate } = req.query;
 
         const filter = {};
         if (active === 'true') {
             filter.isActive = true;
         }
 
-        const collections = await Collection.find(filter)
+        let collections = await Collection.find(filter)
             .sort({ order: 1, createdAt: -1 })
             .lean();
+
+        // Populate items with full details if requested (for admin panel)
+        if (populate === 'true') {
+            for (let collection of collections) {
+                const populatedItems = [];
+
+                for (const item of collection.items || []) {
+                    let content = null;
+
+                    if (item.contentType === 'Movie') {
+                        content = await Movie.findById(item.contentId)
+                            .select('title slug poster metadata createdAt')
+                            .lean();
+                    } else if (item.contentType === 'Series') {
+                        content = await Series.findById(item.contentId)
+                            .select('title slug poster metadata createdAt seasons')
+                            .lean();
+                    }
+
+                    if (content) {
+                        populatedItems.push({
+                            _id: item._id,
+                            ...content,
+                            type: item.contentType.toLowerCase(),
+                            contentType: item.contentType,
+                            addedAt: item.addedAt
+                        });
+                    }
+                }
+
+                collection.items = populatedItems;
+            }
+        }
 
         res.json(collections);
     } catch (error) {
