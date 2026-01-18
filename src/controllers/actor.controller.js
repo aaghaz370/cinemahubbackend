@@ -9,7 +9,13 @@ exports.getActorById = async (req, res) => {
     try {
         const { actorId } = req.params;
 
-        let actor = await Actor.findOne({ tmdbId: actorId });
+        // Try to find actor - handle both string and number IDs
+        let actor = await Actor.findOne({
+            $or: [
+                { tmdbId: actorId },           // String match
+                { tmdbId: parseInt(actorId) }  // Number match
+            ]
+        });
 
         if (!actor) {
             return res.status(404).json({
