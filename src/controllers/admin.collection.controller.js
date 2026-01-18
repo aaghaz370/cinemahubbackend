@@ -265,25 +265,32 @@ exports.bulkAddItems = async (req, res) => {
             }
         }
 
-        const { items } = bodyData;
+        let { items } = bodyData;
 
-        console.log('📦 Bulk Add Request:', {
-            collectionId: id,
+        console.log('📦 Bulk Add Debug:', {
             bodyType: typeof req.body,
-            bodyRaw: req.body,
-            bodyParsed: bodyData,
-            items: items,
+            bodyDataType: typeof bodyData,
             itemsType: typeof items,
             itemsIsArray: Array.isArray(items),
-            itemsLength: Array.isArray(items) ? items.length : 'not array'
+            itemsConstructor: items?.constructor?.name,
+            itemsValue: items
         });
 
         if (!items) {
             return res.status(400).json({ error: 'items field is required in request body' });
         }
 
+        // Force convert to array if it's array-like object
+        if (!Array.isArray(items) && typeof items === 'object' && items !== null) {
+            console.log('🔄 Converting object to array');
+            items = Object.values(items);
+        }
+
         if (!Array.isArray(items)) {
-            return res.status(400).json({ error: 'items must be an array', receivedType: typeof items });
+            return res.status(400).json({
+                error: 'items must be an array',
+                received: typeof items
+            });
         }
 
         if (items.length === 0) {
@@ -301,8 +308,6 @@ exports.bulkAddItems = async (req, res) => {
 
         for (const item of items) {
             const { contentId, contentType } = item;
-
-            console.log('🔍 Processing item:', { contentId, contentType });
 
             if (!contentId || !['Movie', 'Series'].includes(contentType)) {
                 console.log('⚠️ Skipping invalid item:', item);
