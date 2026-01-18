@@ -255,8 +255,24 @@ exports.bulkAddItems = async (req, res) => {
         const { id } = req.params;
         const { items } = req.body; // Array of { contentId, contentType }
 
-        if (!Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ error: 'items array is required' });
+        console.log('📦 Bulk Add Request:', {
+            collectionId: id,
+            itemsReceived: items,
+            itemsType: typeof items,
+            itemsLength: Array.isArray(items) ? items.length : 'not array',
+            body: req.body
+        });
+
+        if (!items) {
+            return res.status(400).json({ error: 'items field is required in request body' });
+        }
+
+        if (!Array.isArray(items)) {
+            return res.status(400).json({ error: 'items must be an array' });
+        }
+
+        if (items.length === 0) {
+            return res.status(400).json({ error: 'items array cannot be empty' });
         }
 
         const collection = await Collection.findById(id);
@@ -266,11 +282,16 @@ exports.bulkAddItems = async (req, res) => {
         }
 
         let addedCount = 0;
+        let skippedCount = 0;
 
         for (const item of items) {
             const { contentId, contentType } = item;
 
+            console.log('🔍 Processing item:', { contentId, contentType });
+
             if (!contentId || !['Movie', 'Series'].includes(contentType)) {
+                console.log('⚠️ Skipping invalid item:', item);
+                skippedCount++;
                 continue;
             }
 
@@ -279,24 +300,32 @@ exports.bulkAddItems = async (req, res) => {
                 i => i.contentId.toString() === contentId && i.contentType === contentType
             );
 
-            if (!exists) {
-                collection.items.push({
-                    contentId,
-                    contentType,
-                    addedAt: new Date()
-                });
-                addedCount++;
+            if (exists) {
+                console.log('⏭️ Item already in collection:', contentId);
+                skippedCount++;
+                continue;
             }
+
+            collection.items.push({
+                contentId,
+                contentType,
+                addedAt: new Date()
+            });
+            addedCount++;
         }
 
         await collection.save();
 
+        console.log('✅ Bulk add complete:', { addedCount, skippedCount, total: items.length });
+
         res.json({
             message: `${addedCount} items added to collection`,
+            addedCount,
+            skippedCount,
             collection
         });
     } catch (error) {
-        console.error('Error bulk adding items:', error);
-        res.status(500).json({ error: 'Failed to bulk add items' });
+        console.error('❌ Error bulk adding items:', error);
+        res.status(500).json({ error: 'Failed to bulk add items', details: error.message });
     }
 };
