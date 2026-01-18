@@ -253,14 +253,29 @@ exports.removeItemFromCollection = async (req, res) => {
 exports.bulkAddItems = async (req, res) => {
     try {
         const { id } = req.params;
-        const { items } = req.body; // Array of { contentId, contentType }
+
+        // Handle both JSON object and stringified JSON
+        let bodyData = req.body;
+        if (typeof req.body === 'string') {
+            try {
+                bodyData = JSON.parse(req.body);
+            } catch (e) {
+                console.error('Failed to parse body string:', e);
+                return res.status(400).json({ error: 'Invalid JSON in request body' });
+            }
+        }
+
+        const { items } = bodyData;
 
         console.log('📦 Bulk Add Request:', {
             collectionId: id,
-            itemsReceived: items,
+            bodyType: typeof req.body,
+            bodyRaw: req.body,
+            bodyParsed: bodyData,
+            items: items,
             itemsType: typeof items,
-            itemsLength: Array.isArray(items) ? items.length : 'not array',
-            body: req.body
+            itemsIsArray: Array.isArray(items),
+            itemsLength: Array.isArray(items) ? items.length : 'not array'
         });
 
         if (!items) {
@@ -268,7 +283,7 @@ exports.bulkAddItems = async (req, res) => {
         }
 
         if (!Array.isArray(items)) {
-            return res.status(400).json({ error: 'items must be an array' });
+            return res.status(400).json({ error: 'items must be an array', receivedType: typeof items });
         }
 
         if (items.length === 0) {
