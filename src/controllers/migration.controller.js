@@ -19,8 +19,21 @@ exports.migrateTmdbExtras = async (req, res) => {
 
         console.log('🚀 Starting TMDB Extras Migration via API...');
 
-        // ===== FORCE RELOAD MODELS (Clear cache) =====
+        // ===== FORCE RELOAD MODELS (Clear Mongoose cache properly) =====
         console.log('🔄 Reloading Mongoose models to ensure latest schema...');
+        const mongoose = require('mongoose');
+
+        // Delete existing models from Mongoose
+        if (mongoose.models.Movie) {
+            delete mongoose.models.Movie;
+            delete mongoose.modelSchemas.Movie;
+        }
+        if (mongoose.models.Series) {
+            delete mongoose.models.Series;
+            delete mongoose.modelSchemas.Series;
+        }
+
+        // Clear require cache
         delete require.cache[require.resolve('../models/Movie')];
         delete require.cache[require.resolve('../models/Series')];
 
