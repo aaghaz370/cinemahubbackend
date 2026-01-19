@@ -68,7 +68,13 @@ exports.fetchVideos = async (tmdbId, type = 'movie') => {
             : `/tv/${tmdbId}/videos`;
 
         const response = await tmdb.get(endpoint);
-        const videos = response.data.results;
+        const videos = response.data?.results || [];
+
+        // Check if we have valid data
+        if (!Array.isArray(videos)) {
+            console.warn(`Invalid videos data for ${type} ${tmdbId}`);
+            return [];
+        }
 
         // Filter and format videos
         return videos.map(video => ({

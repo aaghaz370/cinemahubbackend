@@ -73,7 +73,13 @@ exports.migrateTmdbExtras = async (req, res) => {
                 await sleep(300); // Rate limiting
             } catch (error) {
                 results.movies.apiError++;
-                console.error(`❌ API Error for "${movie.title}":`, error.message);
+                console.error(`❌ API Error for "${movie.title}" (ID: ${movie.tmdbId}):`);
+                console.error(`   Message: ${error.message}`);
+                console.error(`   Stack: ${error.stack?.split('\n')[0]}`);
+                if (error.response) {
+                    console.error(`   HTTP Status: ${error.response.status}`);
+                    console.error(`   Response: ${JSON.stringify(error.response.data)}`);
+                }
             }
         }
 
@@ -114,7 +120,13 @@ exports.migrateTmdbExtras = async (req, res) => {
                 await sleep(300);
             } catch (error) {
                 results.series.apiError++;
-                console.error(`❌ API Error for "${show.title}":`, error.message);
+                console.error(`❌ API Error for "${show.title}" (ID: ${show.tmdbId}):`);
+                console.error(`   Message: ${error.message}`);
+                console.error(`   Stack: ${error.stack?.split('\n')[0]}`);
+                if (error.response) {
+                    console.error(`   HTTP Status: ${error.response.status}`);
+                    console.error(`   Response: ${JSON.stringify(error.response.data)}`);
+                }
             }
         }
 
