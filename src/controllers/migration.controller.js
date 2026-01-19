@@ -86,15 +86,22 @@ exports.migrateTmdbExtras = async (req, res) => {
                 const { watchProviders, videos } = await fetchMovieExtras(movie.tmdbId);
 
                 if (watchProviders || videos?.length > 0) {
+                    // Use $set to completely replace fields (avoids corrupt data issues)
+                    const updateFields = {};
+
                     if (watchProviders) {
-                        movie.metadata.watchProviders = watchProviders;
-                        movie.markModified('metadata.watchProviders');
+                        updateFields['metadata.watchProviders'] = watchProviders;
                     }
                     if (videos?.length > 0) {
-                        movie.metadata.videos = videos;
-                        movie.markModified('metadata.videos');
+                        updateFields['metadata.videos'] = videos;
                     }
-                    await movie.save();
+
+                    // Direct database update (bypasses Mongoose validation on existing corrupt data)
+                    await Movie.updateOne(
+                        { _id: movie._id },
+                        { $set: updateFields }
+                    );
+
                     results.movies.updated++;
                     console.log(`✅ Updated: ${movie.title} (Region: ${watchProviders?.region || 'N/A'})`);
                 } else {
@@ -133,15 +140,22 @@ exports.migrateTmdbExtras = async (req, res) => {
                 const { watchProviders, videos } = await fetchSeriesExtras(show.tmdbId);
 
                 if (watchProviders || videos?.length > 0) {
+                    // Use $set to completely replace fields (avoids corrupt data issues)
+                    const updateFields = {};
+
                     if (watchProviders) {
-                        show.metadata.watchProviders = watchProviders;
-                        show.markModified('metadata.watchProviders');
+                        updateFields['metadata.watchProviders'] = watchProviders;
                     }
                     if (videos?.length > 0) {
-                        show.metadata.videos = videos;
-                        show.markModified('metadata.videos');
+                        updateFields['metadata.videos'] = videos;
                     }
-                    await show.save();
+
+                    // Direct database update (bypasses Mongoose validation on existing corrupt data)
+                    await Series.updateOne(
+                        { _id: show._id },
+                        { $set: updateFields }
+                    );
+
                     results.series.updated++;
                     console.log(`✅ Updated: ${show.title} (Region: ${watchProviders?.region || 'N/A'})`);
                 } else {
