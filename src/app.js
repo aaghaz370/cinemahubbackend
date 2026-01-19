@@ -43,7 +43,9 @@ const allowedOrigins = [
     // Production URLs
     'https://cinemahub8.vercel.app',
     'https://cinemahub.vercel.app',
-    'https://cinemahub-admin.vercel.app'
+    'https://cinemahub-admin.vercel.app',
+    'https://cinemahub.biz',
+    'https://www.cinemahub.biz',
 ].filter(Boolean);
 
 console.log('🔒 CORS Allowed Origins:', allowedOrigins);
