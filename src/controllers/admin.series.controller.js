@@ -4,6 +4,7 @@ const Episode = require("../models/Episode");
 const tmdb = require("../config/tmdb");
 const slugify = require("slugify");
 const { fetchSeriesExtras } = require('../helpers/tmdb.helper');
+const { syncActorsFromSeries } = require('../helpers/actor.sync.helper');
 
 /**
  * ADD SERIES
@@ -86,6 +87,11 @@ exports.addSeries = async (req, res) => {
       }
     }).catch(err => {
       console.error(`Failed to fetch extras for ${series.title}:`, err.message);
+    });
+
+    // 🎭 SYNC ACTORS (Async - don't block response)
+    syncActorsFromSeries(series).catch(err => {
+      console.error(`Failed to sync actors for ${series.title}:`, err.message);
     });
 
     res.status(201).json(series);

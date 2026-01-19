@@ -2,6 +2,7 @@ const Movie = require("../models/Movie");
 const tmdb = require("../config/tmdb");
 const slugify = require("slugify");
 const { fetchMovieExtras } = require('../helpers/tmdb.helper');
+const { syncActorsFromMovie } = require('../helpers/actor.sync.helper');
 
 exports.addMovie = async (req, res) => {
   try {
@@ -95,6 +96,12 @@ exports.addMovie = async (req, res) => {
     }).catch(err => {
       console.error(`Failed to fetch extras for ${movie.title}:`, err.message);
     });
+
+    // 🎭 SYNC ACTORS (Async - don't block response)
+    syncActorsFromMovie(movie).catch(err => {
+      console.error(`Failed to sync actors for ${movie.title}:`, err.message);
+    });
+
     res.status(201).json(movie);
   } catch (err) {
     console.error('❌ Error adding movie:', err.message);
