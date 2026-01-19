@@ -52,21 +52,24 @@ const movieSchema = new mongoose.Schema(
           {
             provider_name: String,
             logo_path: String,
-            provider_id: Number
+            provider_id: Number,
+            _id: false
           }
         ],
         rent: [  // Rent options
           {
             provider_name: String,
             logo_path: String,
-            provider_id: Number
+            provider_id: Number,
+            _id: false
           }
         ],
         buy: [  // Buy options
           {
             provider_name: String,
             logo_path: String,
-            provider_id: Number
+            provider_id: Number,
+            _id: false
           }
         ],
         link: String,  // TMDB watch providers page
@@ -78,10 +81,11 @@ const movieSchema = new mongoose.Schema(
         {
           key: String,  // YouTube video ID
           name: String,  // Video title
-          site: String,  // YouTube, Vimeo, etc.
+          site: String,  // YouTube, Vimeo, etc.)
           type: String,  // Trailer, Teaser, Clip, Behind the Scenes, Bloopers, Featurette
           official: Boolean,  // Official video or not
-          size: Number  // Video resolution (720, 1080)
+          size: Number,  // Video resolution (720, 1080)
+          _id: false
         }
       ]
     },

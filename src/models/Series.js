@@ -39,21 +39,24 @@ const seriesSchema = new mongoose.Schema(
           {
             provider_name: String,
             logo_path: String,
-            provider_id: Number
+            provider_id: Number,
+            _id: false
           }
         ],
         rent: [
           {
             provider_name: String,
             logo_path: String,
-            provider_id: Number
+            provider_id: Number,
+            _id: false
           }
         ],
         buy: [
           {
             provider_name: String,
             logo_path: String,
-            provider_id: Number
+            provider_id: Number,
+            _id: false
           }
         ],
         link: String,
@@ -68,7 +71,8 @@ const seriesSchema = new mongoose.Schema(
           site: String,
           type: String,
           official: Boolean,
-          size: Number
+          size: Number,
+          _id: false  // Prevent Mongoose from adding _id to subdocuments
         }
       ]
     },
