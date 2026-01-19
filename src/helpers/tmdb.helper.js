@@ -16,9 +16,10 @@ exports.fetchWatchProviders = async (tmdbId, type = 'movie') => {
         const response = await tmdb.get(endpoint);
         const providers = response.data.results;
 
-        // Try multiple regions for better coverage
-        const regions = ['IN', 'US', 'GB']; // India, US, UK
+        // Try multiple regions for better coverage (India first, then international)
+        const regions = ['IN', 'US', 'GB', 'CA', 'AU', 'DE', 'FR', 'JP', 'KR', 'BR']; // Expanded regions
         let providerData = null;
+        let foundRegion = null;
 
         for (const region of regions) {
             if (providers[region] && (
@@ -27,17 +28,25 @@ exports.fetchWatchProviders = async (tmdbId, type = 'movie') => {
                 providers[region].buy?.length > 0
             )) {
                 providerData = providers[region];
+                foundRegion = region;
                 console.log(`✅ Found providers in ${region} for ${type} ${tmdbId}`);
                 break; // Found data, stop searching
             }
         }
 
         if (!providerData) {
-            console.log(`⚠️  No providers found for ${type} ${tmdbId}`);
+            // Check if ANY region has data (even if empty arrays)
+            const availableRegions = Object.keys(providers);
+            if (availableRegions.length > 0) {
+                console.log(`⚠️  No providers available for ${type} ${tmdbId} in any region. Checked: ${regions.join(', ')}`);
+            } else {
+                console.log(`❌ TMDB has no provider data for ${type} ${tmdbId}`);
+            }
             return null; // No providers found in any region
         }
 
         return {
+            region: foundRegion, // Store which region data is from
             flatrate: providerData.flatrate || [],
             rent: providerData.rent || [],
             buy: providerData.buy || [],

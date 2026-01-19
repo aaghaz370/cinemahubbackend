@@ -69,7 +69,8 @@ const movieSchema = new mongoose.Schema(
             provider_id: Number
           }
         ],
-        link: String  // TMDB watch providers page
+        link: String,  // TMDB watch providers page
+        region: String  // Which region's data (IN, US, GB, etc.)
       },
 
       // Videos (Trailers, Clips, BTS, etc.)

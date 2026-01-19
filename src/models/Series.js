@@ -56,7 +56,8 @@ const seriesSchema = new mongoose.Schema(
             provider_id: Number
           }
         ],
-        link: String
+        link: String,
+        region: String  // Which region's data (IN, US, GB, etc.)
       },
 
       // Videos (Trailers, Clips, etc.)
