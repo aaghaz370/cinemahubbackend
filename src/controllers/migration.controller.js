@@ -20,8 +20,20 @@ exports.migrateTmdbExtras = async (req, res) => {
         console.log('🚀 Starting TMDB Extras Migration via API...');
 
         const results = {
-            movies: { total: 0, updated: 0, failed: 0 },
-            series: { total: 0, updated: 0, failed: 0 }
+            movies: {
+                total: 0,
+                updated: 0,
+                noDataFromTMDB: 0,  // TMDB doesn't have provider data
+                apiError: 0,        // Actual API/network errors
+                alreadyHasData: 0   // Already has watchProviders
+            },
+            series: {
+                total: 0,
+                updated: 0,
+                noDataFromTMDB: 0,
+                apiError: 0,
+                alreadyHasData: 0
+            }
         };
 
         // ===== MIGRATE MOVIES =====
@@ -30,25 +42,38 @@ exports.migrateTmdbExtras = async (req, res) => {
 
         for (const movie of movies) {
             try {
+                // Skip if already has watchProviders
+                if (movie.metadata?.watchProviders?.flatrate?.length > 0 ||
+                    movie.metadata?.watchProviders?.rent?.length > 0 ||
+                    movie.metadata?.watchProviders?.buy?.length > 0) {
+                    results.movies.alreadyHasData++;
+                    console.log(`⏭️  Skipped (already has data): ${movie.title}`);
+                    await sleep(100); // Minimal delay
+                    continue;
+                }
+
                 const { watchProviders, videos } = await fetchMovieExtras(movie.tmdbId);
 
-                if (watchProviders || videos.length > 0) {
+                if (watchProviders || videos?.length > 0) {
                     if (watchProviders) {
                         movie.metadata.watchProviders = watchProviders;
-                        movie.markModified('metadata.watchProviders'); // Tell Mongoose to track change
+                        movie.markModified('metadata.watchProviders');
                     }
-                    if (videos.length > 0) {
+                    if (videos?.length > 0) {
                         movie.metadata.videos = videos;
-                        movie.markModified('metadata.videos'); // Tell Mongoose to track change
+                        movie.markModified('metadata.videos');
                     }
                     await movie.save();
                     results.movies.updated++;
-                    console.log(`✅ Updated: ${movie.title}`);
+                    console.log(`✅ Updated: ${movie.title} (Region: ${watchProviders?.region || 'N/A'})`);
+                } else {
+                    results.movies.noDataFromTMDB++;
+                    console.log(`⚠️  No TMDB data: ${movie.title} (TMDB ID: ${movie.tmdbId})`);
                 }
                 await sleep(300); // Rate limiting
             } catch (error) {
-                results.movies.failed++;
-                console.error(`Movie failed: ${movie.title}`, error.message);
+                results.movies.apiError++;
+                console.error(`❌ API Error for "${movie.title}":`, error.message);
             }
         }
 
@@ -58,25 +83,38 @@ exports.migrateTmdbExtras = async (req, res) => {
 
         for (const show of series) {
             try {
+                // Skip if already has watchProviders
+                if (show.metadata?.watchProviders?.flatrate?.length > 0 ||
+                    show.metadata?.watchProviders?.rent?.length > 0 ||
+                    show.metadata?.watchProviders?.buy?.length > 0) {
+                    results.series.alreadyHasData++;
+                    console.log(`⏭️  Skipped (already has data): ${show.title}`);
+                    await sleep(100);
+                    continue;
+                }
+
                 const { watchProviders, videos } = await fetchSeriesExtras(show.tmdbId);
 
-                if (watchProviders || videos.length > 0) {
+                if (watchProviders || videos?.length > 0) {
                     if (watchProviders) {
                         show.metadata.watchProviders = watchProviders;
                         show.markModified('metadata.watchProviders');
                     }
-                    if (videos.length > 0) {
+                    if (videos?.length > 0) {
                         show.metadata.videos = videos;
                         show.markModified('metadata.videos');
                     }
                     await show.save();
                     results.series.updated++;
-                    console.log(`✅ Updated: ${show.title}`);
+                    console.log(`✅ Updated: ${show.title} (Region: ${watchProviders?.region || 'N/A'})`);
+                } else {
+                    results.series.noDataFromTMDB++;
+                    console.log(`⚠️  No TMDB data: ${show.title} (TMDB ID: ${show.tmdbId})`);
                 }
                 await sleep(300);
             } catch (error) {
-                results.series.failed++;
-                console.error(`Series failed: ${show.title}`, error.message);
+                results.series.apiError++;
+                console.error(`❌ API Error for "${show.title}":`, error.message);
             }
         }
 
