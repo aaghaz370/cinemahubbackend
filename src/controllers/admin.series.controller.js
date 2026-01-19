@@ -3,6 +3,7 @@ const Season = require("../models/Season");
 const Episode = require("../models/Episode");
 const tmdb = require("../config/tmdb");
 const slugify = require("slugify");
+const { fetchSeriesExtras } = require('../helpers/tmdb.helper');
 
 /**
  * ADD SERIES
@@ -62,6 +63,29 @@ exports.addSeries = async (req, res) => {
         countries: data.origin_country,
         companies: data.production_companies?.map(c => c.name)
       }
+    });
+
+    console.log(`✅ Series created: ${series.title}`);
+
+    // 📺 FETCH WATCH PROVIDERS & VIDEOS (Async - don't block response)
+    fetchSeriesExtras(tmdbId).then(({ watchProviders, videos }) => {
+      if (watchProviders || videos?.length > 0) {
+        if (watchProviders) {
+          series.metadata.watchProviders = watchProviders;
+          series.markModified('metadata.watchProviders');
+        }
+        if (videos?.length > 0) {
+          series.metadata.videos = videos;
+          series.markModified('metadata.videos');
+        }
+        series.save().then(() => {
+          console.log(`✅ Watch Providers & Videos updated for: ${series.title}`);
+        }).catch(err => {
+          console.error(`Failed to save providers for ${series.title}:`, err.message);
+        });
+      }
+    }).catch(err => {
+      console.error(`Failed to fetch extras for ${series.title}:`, err.message);
     });
 
     res.status(201).json(series);

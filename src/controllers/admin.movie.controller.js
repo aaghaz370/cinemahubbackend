@@ -1,6 +1,7 @@
 const Movie = require("../models/Movie");
 const tmdb = require("../config/tmdb");
 const slugify = require("slugify");
+const { fetchMovieExtras } = require('../helpers/tmdb.helper');
 
 exports.addMovie = async (req, res) => {
   try {
@@ -73,6 +74,27 @@ exports.addMovie = async (req, res) => {
     });
 
     console.log(`✅ Movie created: ${movie.title}`);
+
+    // 🎬 FETCH WATCH PROVIDERS & VIDEOS (Async - don't block response)
+    fetchMovieExtras(tmdbId).then(({ watchProviders, videos }) => {
+      if (watchProviders || videos?.length > 0) {
+        if (watchProviders) {
+          movie.metadata.watchProviders = watchProviders;
+          movie.markModified('metadata.watchProviders');
+        }
+        if (videos?.length > 0) {
+          movie.metadata.videos = videos;
+          movie.markModified('metadata.videos');
+        }
+        movie.save().then(() => {
+          console.log(`✅ Watch Providers & Videos updated for: ${movie.title}`);
+        }).catch(err => {
+          console.error(`Failed to save providers for ${movie.title}:`, err.message);
+        });
+      }
+    }).catch(err => {
+      console.error(`Failed to fetch extras for ${movie.title}:`, err.message);
+    });
     res.status(201).json(movie);
   } catch (err) {
     console.error('❌ Error adding movie:', err.message);
