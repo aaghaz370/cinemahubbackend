@@ -181,3 +181,42 @@ exports.toggleTheatre = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+/**
+ * TOGGLE Hero Banner Status - Add/Remove from Homepage Hero Banner (Max 8 items)
+ */
+exports.toggleHeroBanner = async (req, res) => {
+  try {
+    const movie = await Movie.findById(req.params.id);
+
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+
+    // Check current count if trying to enable
+    if (!movie.isInHeroBanner) {
+      const currentCount = await Movie.countDocuments({ isInHeroBanner: true });
+      const Series = require('../models/Series');
+      const seriesCount = await Series.countDocuments({ isInHeroBanner: true });
+
+      if (currentCount + seriesCount >= 8) {
+        return res.status(400).json({
+          message: "❌ Hero Banner limit reached (8 items max). Remove an existing item first.",
+          currentCount: currentCount + seriesCount
+        });
+      }
+    }
+
+    // Toggle the isInHeroBanner status
+    movie.isInHeroBanner = !movie.isInHeroBanner;
+    await movie.save();
+
+    res.json({
+      message: movie.isInHeroBanner ? "⭐ Added to Hero Banner" : "❌ Removed from Hero Banner",
+      isInHeroBanner: movie.isInHeroBanner,
+      movie
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

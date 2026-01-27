@@ -11,12 +11,16 @@ const {
   deleteSeason,
   addEpisode,
   updateEpisode,
-  deleteEpisode
+  deleteEpisode,
+  toggleHeroBanner
 } = require("../controllers/admin.series.controller");
 
 // 🔐 ADMIN ONLY - Series
 router.post("/admin/series", addSeries);
 router.delete("/admin/series/:id", deleteSeries);
+
+// ⭐ Hero Banner Toggle
+router.patch("/admin/series/:id/hero", toggleHeroBanner);
 
 // Season
 router.post("/admin/season", addSeason);

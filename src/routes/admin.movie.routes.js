@@ -7,7 +7,8 @@ const {
   addMovie,
   updateMovie,
   deleteMovie,
-  toggleTheatre
+  toggleTheatre,
+  toggleHeroBanner
 } = require("../controllers/admin.movie.controller");
 
 // 🔐 ADMIN PROTECTED ROUTES
@@ -20,6 +21,9 @@ router.delete("/admin/movie/:id", deleteMovie);
 
 // 🎬 Theatre Toggle
 router.patch("/admin/movie/:id/theatre", toggleTheatre);
+
+// ⭐ Hero Banner Toggle
+router.patch("/admin/movie/:id/hero", toggleHeroBanner);
 
 module.exports = router;
 

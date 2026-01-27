@@ -83,7 +83,10 @@ const seriesSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Season"
       }
-    ]
+    ],
+
+    // Hero Banner Feature - Featured on homepage carousel (Max 8 items combined with movies)
+    isInHeroBanner: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

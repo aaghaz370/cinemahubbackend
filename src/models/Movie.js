@@ -97,6 +97,9 @@ const movieSchema = new mongoose.Schema(
     // Theatre Watch Feature - Movies currently in theatres
     isInTheatre: { type: Boolean, default: false },
 
+    // Hero Banner Feature - Featured on homepage carousel (Max 8 items)
+    isInHeroBanner: { type: Boolean, default: false },
+
     watch: [
       {
         server: String,
