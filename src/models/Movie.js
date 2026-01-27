@@ -11,6 +11,8 @@ const movieSchema = new mongoose.Schema(
       backdrop: String,
       overview: String,
       genres: [String],
+      rating: Number,
+      logo: String, // New field for title logo
 
       // ✅ SIMPLE & SAFE
       cast: [

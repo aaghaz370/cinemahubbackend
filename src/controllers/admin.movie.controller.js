@@ -11,10 +11,13 @@ exports.addMovie = async (req, res) => {
     console.log(`📥 Fetching TMDB data for: ${title} (ID: ${tmdbId})`);
 
     const { data } = await tmdb.get(`/movie/${tmdbId}`, {
-      params: { append_to_response: "credits" }
+      params: { append_to_response: "credits,images", include_image_language: "en,null" }
     });
 
     console.log('✅ TMDB data received');
+
+    // 🖼️ LOGO - Get 1st English PNG logo
+    const logo = data.images?.logos?.find(l => l.file_path?.endsWith('.png'))?.file_path || null;
 
     // 🎭 CAST - Safe handling
     const cast = data.credits?.cast?.slice(0, 10).map(p => ({
@@ -54,6 +57,7 @@ exports.addMovie = async (req, res) => {
       metadata: {
         poster: data.poster_path,
         backdrop: data.backdrop_path,
+        logo: logo, // Save the logo here
         overview: data.overview,
         genres: data.genres?.map(g => g.name) || [],
         rating: data.vote_average || 0,

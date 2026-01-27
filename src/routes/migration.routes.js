@@ -12,6 +12,9 @@ router.get('/deploy/info', deployInfoController.getDeploymentInfo);
 // Trigger migration (Run once to populate existing data)
 router.post('/migrate/tmdb-extras', migrationController.migrateTmdbExtras);
 
+// Trigger Logo Migration (NEW)
+router.post('/migrate/logos', migrationController.migrateLogos);
+
 // Check migration status
 router.get('/migrate/status', migrationController.getMigrationStatus);
 

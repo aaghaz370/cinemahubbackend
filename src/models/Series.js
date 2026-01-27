@@ -21,6 +21,7 @@ const seriesSchema = new mongoose.Schema(
       backdrop: String,
       overview: String,
       genres: [String],
+      logo: String, // New field for title logo
 
       cast: [personSchema],
       director: personSchema,

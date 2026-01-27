@@ -6,9 +6,92 @@
 const Movie = require('../models/Movie');
 const Series = require('../models/Series');
 const { fetchMovieExtras, fetchSeriesExtras } = require('../helpers/tmdb.helper');
+const tmdb = require("../config/tmdb");
 
 // Sleep helper
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/* ================= MIGRATE LOGOS (NEW) ================= */
+exports.migrateLogos = async (req, res) => {
+    try {
+        req.setTimeout(600000); // 10 mins timeout
+        console.log('🚀 Starting Logo Migration...');
+
+        const Movie = require('../models/Movie');
+        const Series = require('../models/Series');
+
+        let updatedMovies = 0;
+        let updatedSeries = 0;
+
+        // 1. MIGRATE MOVIES
+        const movies = await Movie.find({});
+        console.log(`🎬 Found ${movies.length} movies. Proccessing...`);
+
+        for (const movie of movies) {
+            if (movie.metadata?.logo) continue; // Skip if already has logo
+
+            try {
+                const { data } = await tmdb.get(`/movie/${movie.tmdbId}/images`, {
+                    params: { include_image_language: "en,null" }
+                });
+
+                const logo = data.logos?.find(l => l.file_path?.endsWith('.png'))?.file_path;
+
+                if (logo) {
+                    await Movie.updateOne(
+                        { _id: movie._id },
+                        { $set: { "metadata.logo": logo } }
+                    );
+                    updatedMovies++;
+                    process.stdout.write('.'); // Progress dot
+                }
+                await sleep(50); // Rate limit
+            } catch (err) {
+                console.error(`❌ Failed format movie ${movie.title}: ${err.message}`);
+            }
+        }
+        console.log(`\n✅ Updated ${updatedMovies} movies with logos.`);
+
+        // 2. MIGRATE SERIES
+        const seriesList = await Series.find({});
+        console.log(`📺 Found ${seriesList.length} series. Processing...`);
+
+        for (const series of seriesList) {
+            if (series.metadata?.logo) continue;
+
+            try {
+                const { data } = await tmdb.get(`/tv/${series.tmdbId}/images`, {
+                    params: { include_image_language: "en,null" }
+                });
+
+                const logo = data.logos?.find(l => l.file_path?.endsWith('.png'))?.file_path;
+
+                if (logo) {
+                    await Series.updateOne(
+                        { _id: series._id },
+                        { $set: { "metadata.logo": logo } }
+                    );
+                    updatedSeries++;
+                    process.stdout.write('.');
+                }
+                await sleep(50);
+            } catch (err) {
+                console.error(`❌ Failed format series ${series.title}: ${err.message}`);
+            }
+        }
+        console.log(`\n✅ Updated ${updatedSeries} series with logos.`);
+
+        res.json({
+            success: true,
+            message: `Migration check complete. Updated ${updatedMovies} movies & ${updatedSeries} series.`,
+            stats: { updatedMovies, updatedSeries }
+        });
+
+    } catch (err) {
+        console.error("Migration Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
 
 // ================= TRIGGER MIGRATION VIA API =================
 

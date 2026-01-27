@@ -14,8 +14,11 @@ exports.addSeries = async (req, res) => {
     const { title, tmdbId } = req.body;
 
     const { data } = await tmdb.get(`/tv/${tmdbId}`, {
-      params: { append_to_response: "credits" }
+      params: { append_to_response: "credits,images", include_image_language: "en,null" }
     });
+
+    // 🖼️ LOGO - Get 1st English PNG logo
+    const logo = data.images?.logos?.find(l => l.file_path?.endsWith('.png'))?.file_path || null;
 
     const cast = data.credits.cast.slice(0, 10).map(c => ({
       tmdbId: c.id,
@@ -43,6 +46,7 @@ exports.addSeries = async (req, res) => {
       metadata: {
         poster: data.poster_path,
         backdrop: data.backdrop_path,
+        logo: logo, // Save the logo here
         overview: data.overview,
         genres: data.genres.map(g => g.name),
 
