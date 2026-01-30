@@ -8,15 +8,49 @@ const cheerio = require('cheerio');
 
 class StreamExtractor {
     constructor() {
-        this.axios = axios.create({
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Referer': 'https://google.com'
-            },
-            maxRedirects: 5,
-            timeout: 10000
+        // Rotate between multiple User-Agents to avoid detection
+        this.userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+        ];
+    }
+
+    getRandomUserAgent() {
+        return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
+    }
+
+    createAxiosInstance(referer = null) {
+        const headers = {
+            'User-Agent': this.getRandomUserAgent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="131", "Chromium";v="131"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'DNT': '1',
+            'Connection': 'keep-alive'
+        };
+
+        if (referer) {
+            headers['Referer'] = referer;
+            headers['Sec-Fetch-Site'] = 'same-origin';
+        }
+
+        return axios.create({
+            headers,
+            maxRedirects: 10,
+            timeout: 15000,
+            validateStatus: (status) => status < 500,
+            withCredentials: false
         });
     }
 
@@ -27,57 +61,86 @@ class StreamExtractor {
         try {
             console.log('🔍 Extracting stream from:', url);
 
+            // Create axios instance with no referer for initial request
+            const axiosInstance = this.createAxiosInstance();
+
             // Step 1: Follow redirects and get final page
-            const response = await this.axios.get(url);
-            const html = response.data;
-            const finalUrl = response.request.res.responseUrl || url;
+            const response = await axiosInstance.get(url);
 
-            console.log('📄 Final URL:', finalUrl);
+            // Check if blocked
+            if (response.status === 403 || response.status === 401) {
+                console.log('⚠️ Initial request blocked, trying with referer...');
+                // Retry with referer
+                const retryInstance = this.createAxiosInstance('https://www.google.com/');
+                const retryResponse = await retryInstance.get(url);
 
-            // Step 2: Try multiple extraction methods
-            let streamUrl = null;
+                if (retryResponse.status >= 400) {
+                    throw new Error(`Access denied (${retryResponse.status}). Website may have bot protection.`);
+                }
 
-            // Method 1: Look for .m3u8 in HTML
-            streamUrl = this.extractM3U8FromHTML(html);
-            if (streamUrl) {
-                console.log('✅ Found M3U8 in HTML');
-                return { type: 'hls', url: streamUrl, source: 'html' };
+                return await this.processResponse(retryResponse, url);
             }
 
-            // Method 2: Look for .mp4 in HTML
-            streamUrl = this.extractMP4FromHTML(html);
-            if (streamUrl) {
-                console.log('✅ Found MP4 in HTML');
-                return { type: 'mp4', url: streamUrl, source: 'html' };
+            if (response.status >= 400) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            // Method 3: Parse JavaScript for video sources
-            streamUrl = this.extractFromJavaScript(html);
-            if (streamUrl) {
-                console.log('✅ Found stream in JavaScript');
-                return streamUrl;
-            }
-
-            // Method 4: Look for common player configs
-            streamUrl = this.extractFromPlayerConfig(html);
-            if (streamUrl) {
-                console.log('✅ Found stream in player config');
-                return streamUrl;
-            }
-
-            // Method 5: Check for iframe sources (recursive)
-            const iframeUrl = this.extractIframeSource(html);
-            if (iframeUrl && iframeUrl !== url) {
-                console.log('🔄 Found iframe, extracting recursively...');
-                return await this.extractStream(iframeUrl);
-            }
-
-            throw new Error('Could not extract video stream from this URL');
+            return await this.processResponse(response, url);
 
         } catch (error) {
             console.error('❌ Extraction error:', error.message);
             throw error;
         }
+    }
+
+    /**
+     * Process response and extract stream
+     */
+    async processResponse(response, originalUrl) {
+        const html = response.data;
+        const finalUrl = response.request?.res?.responseUrl || response.config?.url || originalUrl;
+
+        console.log('📄 Final URL:', finalUrl);
+
+        // Step 2: Try multiple extraction methods
+        let streamUrl = null;
+
+        // Method 1: Look for .m3u8 in HTML
+        streamUrl = this.extractM3U8FromHTML(html);
+        if (streamUrl) {
+            console.log('✅ Found M3U8 in HTML');
+            return { type: 'hls', url: streamUrl, source: 'html' };
+        }
+
+        // Method 2: Look for .mp4 in HTML
+        streamUrl = this.extractMP4FromHTML(html);
+        if (streamUrl) {
+            console.log('✅ Found MP4 in HTML');
+            return { type: 'mp4', url: streamUrl, source: 'html' };
+        }
+
+        // Method 3: Parse JavaScript for video sources
+        streamUrl = this.extractFromJavaScript(html);
+        if (streamUrl) {
+            console.log('✅ Found stream in JavaScript');
+            return streamUrl;
+        }
+
+        // Method 4: Look for common player configs
+        streamUrl = this.extractFromPlayerConfig(html);
+        if (streamUrl) {
+            console.log('✅ Found stream in player config');
+            return streamUrl;
+        }
+
+        // Method 5: Check for iframe sources (recursive)
+        const iframeUrl = this.extractIframeSource(html);
+        if (iframeUrl && iframeUrl !== originalUrl) {
+            console.log('🔄 Found iframe, extracting recursively...');
+            return await this.extractStream(iframeUrl);
+        }
+
+        throw new Error('Could not extract video stream from this URL');
     }
 
     /**
@@ -204,7 +267,6 @@ class StreamExtractor {
                 if (src.startsWith('//')) {
                     src = 'https:' + src;
                 } else if (src.startsWith('/')) {
-                    // Would need base URL - skip for now
                     return null;
                 }
                 return src;
@@ -217,15 +279,9 @@ class StreamExtractor {
      * Clean and validate URL
      */
     cleanUrl(url) {
-        // Remove escape characters
         url = url.replace(/\\"/g, '"').replace(/\\\//g, '/');
-
-        // Decode HTML entities
         url = url.replace(/&amp;/g, '&').replace(/&quot;/g, '"');
-
-        // Trim whitespace
         url = url.trim();
-
         return url;
     }
 
@@ -234,7 +290,8 @@ class StreamExtractor {
      */
     async testStream(url, type) {
         try {
-            const response = await this.axios.head(url, { timeout: 5000 });
+            const instance = this.createAxiosInstance();
+            const response = await instance.head(url, { timeout: 5000 });
             return response.status === 200;
         } catch (error) {
             return false;
