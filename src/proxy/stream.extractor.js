@@ -12,7 +12,7 @@ try {
 
 /**
  * Advanced Stream Extractor
- * Hybrid: Axios (Fast) + Puppeteer (Bypasses Cloudflare/403)
+ * Hybrid: Axios (Fast) + Pppeteer (Bypasses Cloudflare/403)
  */
 class StreamExtractor {
     constructor() {
